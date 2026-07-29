@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Built registry artifacts are published, not committed.
+# The hand-curated overlay under tools/registry-gen/overlay/ IS committed.
+packages/registry/build/
+
+.env
+.env.*
+!.env.example
+
+.DS_Store
+Thumbs.db

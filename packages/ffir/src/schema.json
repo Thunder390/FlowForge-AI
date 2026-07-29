@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flowforge.dev/schema/ffir/1.0.json",
+  "title": "FFIR Document",
+  "description": "The FlowForge intermediate representation. Flat and non-recursive by construction: branching, looping, and error handling are edge properties rather than nesting, which is what allows strict schema enforcement of model output.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ffir_version",
+    "expression_grammar",
+    "id",
+    "name",
+    "description",
+    "nodes",
+    "edges",
+    "credentials"
+  ],
+  "properties": {
+    "ffir_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Semver-ish major.minor. The migration key."
+    },
+    "expression_grammar": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Versioned separately from ffir_version, because expressions live inside strings inside parameter values and a grammar change cannot be handled by the FFIR migration chain."
+    },
+    "id": { "$ref": "#/$defs/identifier" },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "credentials": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/credentialRef" }
+    },
+    "variables": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/variable" }
+    },
+    "metadata": { "$ref": "#/$defs/metadata" }
+  },
+
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "description": "Matches the grammar's identifier rule, so any node or variable id is referenceable from an expression."
+    },
+
+    "capabilityId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+$",
+      "description": "<integration>.<resource>.<operation>. Names a business capability, never a platform node."
+    },
+
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "capability", "label", "parameters"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "kind": {
+          "enum": [
+            "trigger",
+            "action",
+            "transform",
+            "branch",
+            "merge",
+            "loop",
+            "ai",
+            "wait",
+            "error_handler"
+          ]
+        },
+        "capability": { "$ref": "#/$defs/capabilityId" },
+        "label": { "type": "string", "minLength": 1 },
+        "parameters": {
+          "type": "object",
+          "description": "Shape is defined by the capability's registry entry, not here. Validated in stages 2 and 3.",
+          "additionalProperties": true
+        },
+        "credential": { "$ref": "#/$defs/identifier" },
+        "error_policy": { "$ref": "#/$defs/errorPolicy" },
+        "notes": { "type": "string" }
+      }
+    },
+
+    "errorPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["on_error"],
+      "properties": {
+        "on_error": { "enum": ["stop", "continue", "route"] },
+        "retry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["attempts", "backoff", "initial_delay_ms"],
+          "properties": {
+            "attempts": { "type": "integer", "minimum": 0 },
+            "backoff": { "enum": ["fixed", "exponential"] },
+            "initial_delay_ms": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "timeout_ms": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "to"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "from": { "$ref": "#/$defs/identifier" },
+        "to": { "$ref": "#/$defs/identifier" },
+        "port": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Named output of the source node. Defaults to \"main\" when absent."
+        },
+        "condition": { "$ref": "#/$defs/condition" }
+      }
+    },
+
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["left", "operator"],
+      "properties": {
+        "left": { "type": "string" },
+        "operator": {
+          "enum": [
+            "equals",
+            "not_equals",
+            "contains",
+            "not_contains",
+            "greater_than",
+            "less_than",
+            "is_empty",
+            "is_not_empty",
+            "matches_regex"
+          ]
+        },
+        "right": { "type": "string" }
+      },
+      "if": {
+        "required": ["operator"],
+        "properties": { "operator": { "enum": ["is_empty", "is_not_empty"] } }
+      },
+      "then": {
+        "description": "is_empty and is_not_empty take no right operand.",
+        "properties": { "right": false }
+      },
+      "else": {
+        "description": "Every other operator requires both operands.",
+        "properties": { "right": { "type": "string" } },
+        "required": ["right"]
+      }
+    },
+
+    "credentialRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "capability_scope", "auth_type", "label"],
+      "description": "A symbolic handle. FFIR never contains a secret value.",
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "capability_scope": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$",
+          "description": "The integration segment of the capability ID."
+        },
+        "auth_type": {
+          "enum": ["oauth2", "api_key", "basic", "webhook_secret", "none"]
+        },
+        "label": { "type": "string", "minLength": 1 },
+        "required_scopes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "type", "required", "sensitive"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["string", "number", "boolean"] },
+        "required": { "type": "boolean" },
+        "sensitive": {
+          "type": "boolean",
+          "description": "Marks a variable holding a secret. A sensitive variable must not carry a default, which is validation rule 15 rather than a schema constraint so that the failure carries its own error code."
+        },
+        "default": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+
+    "metadata": {
+      "type": "object",
+      "description": "Non-semantic. The compiler must produce identical functional output whether or not it is present.",
+      "additionalProperties": true,
+      "properties": {
+        "generated_by": { "type": "string" },
+        "generated_at": { "type": "string" },
+        "source_prompt_hash": { "type": "string" },
+        "registry_version": { "type": "string" },
+        "prompt_version": { "type": "string" },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": { "type": "string" },
+              "node_id": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        },
+        "layout": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["x", "y"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

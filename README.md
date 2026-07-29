@@ -3,9 +3,9 @@
 **One-liner:** Describe an automation in plain English, get a working n8n
 workflow blueprint: interactive flow diagram, importable JSON, and a setup guide.
 
-- **Status:** Architecture complete. Implementation not started.
+- **Status:** Architecture frozen. Implementation started, M1 of 23 done.
 - **Effort:** Large. See [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md)
-  for 23 session-sized milestones.
+  for 23 session-sized milestones. Next up is M2, the expression parser.
 - **Why it exists:** The headline portfolio piece. A real AI SaaS with a
   non-trivial engineering core, not a wrapper around a chat completion.
 
@@ -68,6 +68,17 @@ what to build and how it looks. These nine define how it works.
 
 pnpm TypeScript monorepo. Next.js on Vercel, Postgres, a job worker, Claude via
 the Anthropic API behind a provider interface. React Flow for the canvas.
+
+## Running It
+
+```
+pnpm install
+pnpm test        # every package
+pnpm typecheck
+```
+
+Requires Node 20.11 or newer and pnpm 10. Built so far: `packages/config` and
+`packages/ffir` (types, JSON Schema, validation stages 0 and 1).
 
 ## What It Proves to a Client
 

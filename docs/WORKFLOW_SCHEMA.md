@@ -479,6 +479,7 @@ message."
 ```json
 {
   "ffir_version": "1.0",
+  "expression_grammar": "1",
   "id": "wf_01HQ8XONBOARD",
   "name": "Employee onboarding",
   "description": "When BambooHR records a new hire, create their Google Workspace account and announce them in Slack.",
@@ -581,6 +582,7 @@ message."
       "type": "string",
       "default": "example.com",
       "required": true,
+      "sensitive": false,
       "description": "Domain for new employee email addresses."
     },
     {
@@ -588,6 +590,7 @@ message."
       "label": "Temporary password",
       "type": "string",
       "required": true,
+      "sensitive": true,
       "description": "Initial password. Users must change it at first login."
     }
   ],

@@ -19,13 +19,16 @@ that imports into n8n. Everything after that is making it a product.
 
 ## Phase 1: The Engine (no UI)
 
-### M1. Workspace and FFIR types
+### M1. Workspace and FFIR types (done)
 Scaffold the pnpm workspace. `packages/ffir` with types, JSON Schema, and stage 0
 and 1 validators (document limits, schema conformance).
 
 **Done when:** `pnpm test` passes with tests proving a valid document validates,
 a malformed one fails with the right error code, and a document exceeding each
 limit in the limits table is rejected.
+
+Met on 2026-07-28. 71 tests, all nine limits covered by a test that fails if a
+limit is added to the table and left untested.
 
 ### M2. Expression parser
 Grammar v1 parser producing an AST. Version dispatch on `expression_grammar`.

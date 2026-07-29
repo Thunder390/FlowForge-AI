@@ -1,0 +1,22 @@
+{
+  "name": "flowforge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Describe an automation in plain English, get a working n8n workflow blueprint.",
+  "packageManager": "pnpm@10.18.2",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm -r --if-present build"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
