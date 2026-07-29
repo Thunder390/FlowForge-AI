@@ -3,9 +3,9 @@
 **One-liner:** Describe an automation in plain English, get a working n8n
 workflow blueprint: interactive flow diagram, importable JSON, and a setup guide.
 
-- **Status:** Architecture frozen. Implementation started, M1 of 23 done.
+- **Status:** Architecture frozen. Implementation started, M2 of 23 done.
 - **Effort:** Large. See [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md)
-  for 23 session-sized milestones. Next up is M2, the expression parser.
+  for 23 session-sized milestones. Next up is M3, the graph validator.
 - **Why it exists:** The headline portfolio piece. A real AI SaaS with a
   non-trivial engineering core, not a wrapper around a chat completion.
 
@@ -78,7 +78,8 @@ pnpm typecheck
 ```
 
 Requires Node 20.11 or newer and pnpm 10. Built so far: `packages/config` and
-`packages/ffir` (types, JSON Schema, validation stages 0 and 1).
+`packages/ffir` (types, JSON Schema, validation stages 0 and 1, and the
+expression parser).
 
 ## What It Proves to a Client
 

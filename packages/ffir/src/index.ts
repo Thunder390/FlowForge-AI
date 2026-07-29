@@ -11,3 +11,4 @@
 export * from "./types.js";
 export { DOCUMENT_LIMITS, type DocumentLimits, type LimitName } from "./limits.js";
 export * from "./validate/index.js";
+export * from "./expression/index.js";

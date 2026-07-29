@@ -30,12 +30,17 @@ limit in the limits table is rejected.
 Met on 2026-07-28. 71 tests, all nine limits covered by a test that fails if a
 limit is added to the table and left untested.
 
-### M2. Expression parser
+### M2. Expression parser (done)
 Grammar v1 parser producing an AST. Version dispatch on `expression_grammar`.
 
 **Done when:** every example in the WORKFLOW_SCHEMA grammar section parses to the
 expected AST, malformed expressions produce positioned errors, and an unknown
 grammar version is rejected rather than parsed.
+
+Met on 2026-07-29. 158 tests. The dispatch table is pinned to
+`SUPPORTED_EXPRESSION_GRAMMARS` by a test, and a second test pins the parser's
+path depth against the stage 0 scanner's regex approximation, which is the one
+place two implementations of the same idea coexist by design.
 
 ### M3. Graph validator
 Validation stage 4: rules 1 through 18. Returns all failures, not the first.

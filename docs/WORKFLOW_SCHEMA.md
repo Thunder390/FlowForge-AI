@@ -194,6 +194,33 @@ path_segment:= identifier | identifier "[" integer "]"
 node_id     := identifier            ; must match an existing nodes[].id
 ```
 
+`identifier` is `[A-Za-z_][A-Za-z0-9_]*`, the same rule the schema applies to
+every `id` field, so any node or variable that can be declared can be
+referenced. `integer` is non-negative with no leading zeros, which gives an
+index exactly one source form.
+
+Six consequences of reading that grammar strictly, each of which the parser
+enforces and rejects rather than tolerating:
+
+- Whitespace is permitted only at the two edges, because `ws` sits outside
+  `reference`. `{{ n_trigger . email }}` is not valid.
+- A `node_ref` needs at least one path segment. `{{ n_trigger }}` names a step,
+  not a value.
+- An index attaches to a path segment, never to the node id, and there is at
+  most one per segment. `{{ n_items[0].id }}` and `{{ n_grid.cells[0][1] }}`
+  are both rejected.
+- A `var_ref` is `$vars.` plus one identifier and takes no further path.
+- Builtins are whole values and take no path.
+- There is no escape sequence for a literal `{{`, so an unclosed one is a parse
+  error rather than text. Treating it as text would silently discard a
+  reference the author meant to make.
+
+Text outside the braces is literal, so a parameter value is a template rather
+than a single expression: `"Welcome {{ n_trigger.name }}!"` is three parts, two
+of them literal. Targets need that distinction, because a platform that marks
+expression-bearing parameters must not mark a parameter that only looks like
+one.
+
 ### Grammar versioning
 
 `expression_grammar` is versioned **separately from `ffir_version`** and this is
