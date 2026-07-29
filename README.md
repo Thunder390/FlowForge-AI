@@ -18,6 +18,37 @@ diagram, importable n8n JSON, and a setup guide listing every credential needed.
 The hard part is not calling a model. It is stopping the model from inventing
 n8n node parameters that look correct and fail at runtime.
 
+## Architecture
+
+```mermaid
+flowchart TD
+    P["Plain English prompt"] --> AI["packages/ai<br/>two-pass generation"]
+    AI -->|"schema-constrained output"| F["FFIR document<br/>flat nodes + edges"]
+    AI -.->|"capability IDs only"| R[("packages/registry<br/>capabilities + bindings")]
+
+    F --> V["packages/ffir<br/>validation stages 0-4"]
+    V -->|"invalid"| AI
+    V -->|"valid"| C["packages/compiler"]
+
+    R --> V
+    R --> C
+
+    C --> N["n8n JSON<br/>importable"]
+    C --> M["Mermaid diagram"]
+    C --> G["Setup guide<br/>credentials + steps"]
+    F --> X["React Flow canvas"]
+
+    classDef out fill:#1f6feb22,stroke:#1f6feb
+    class N,M,G,X out
+```
+
+The model writes FFIR. Everything else is a pure function of that document, so
+three of the four artifacts are unit-testable and only one surface can
+hallucinate. `packages/ai` has no import path to `packages/compiler`, which is
+what keeps platform knowledge out of the prompt. See
+[PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for the enforced dependency
+rule.
+
 ## The Four Invariants
 
 Every document depends on these. A change that breaks one breaks the
@@ -44,6 +75,21 @@ Make.com is one `Target` plus per-capability bindings, and zero prompt changes.
 Every document passes the same pipeline whether it came from the model, a human,
 or the public marketplace. The strongest guarantee in the system is a property of
 one model provider, so nothing is allowed to depend on it alone.
+
+## Roadmap
+
+23 session-sized milestones across four phases. Full detail, checkpoints, and cut
+lines in [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md).
+
+| Phase | Milestones | What lands | Status |
+| --- | --- | --- | --- |
+| 1. The Engine | M1 to M9 | FFIR, validation, registry, n8n compiler, renderers, AI layer. No UI. | In progress, M3 of 9 |
+| 2. The Service | M10 to M13 | Postgres, durable jobs, API and SSE, auth and tenancy, metering | Not started |
+| 3. The Product | M14 to M19 | Results view, canvas, generation UX, chat iteration, dashboard, landing | Not started |
+| 4. Durability | M20 to M23 | Registry generator, eval harness, observability, marketplace | Not started |
+
+**Current milestone: M3 complete.** Next is M4, the registry format, which
+unblocks validation stages 2 and 3.
 
 ## Documents
 
