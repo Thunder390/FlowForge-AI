@@ -42,12 +42,21 @@ Met on 2026-07-29. 158 tests. The dispatch table is pinned to
 path depth against the stage 0 scanner's regex approximation, which is the one
 place two implementations of the same idea coexist by design.
 
-### M3. Graph validator
+### M3. Graph validator (done)
 Validation stage 4: rules 1 through 18. Returns all failures, not the first.
 
 **Done when:** one test per rule, each with a document that violates only that
 rule, asserting the specific error code. Plus one document violating three rules
 that returns exactly three errors.
+
+Met on 2026-07-29. 276 tests. Fifteen rules, not eighteen: rules 7, 8, and 13
+resolve against the node registry, which `ffir` must not import, so they are
+stages 2 and 3 and land in M5. `RULE_OWNERSHIP` in `validate/graph.ts` records
+the split in code and a test pins it, so the gap cannot be forgotten.
+
+Rule 4 is the one rule that cannot be violated alone: an edge into the trigger
+comes either from a node the trigger reaches, which is a cycle, or from one it
+does not, which is unreachable. Its test asserts both codes and says why.
 
 ### M4. Registry format and fixtures
 `packages/registry`: types, loader, resolver, alias index. Hand-write capability

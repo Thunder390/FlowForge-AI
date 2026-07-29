@@ -678,6 +678,23 @@ validator must not depend on how the document was produced.
 **Resource limits**
 19. The document is within all limits in the table below.
 
+### Which stage runs which rule
+
+The rules are numbered by subject, not by stage, and three of them do not run in
+stage 4. Rules 7, 8, and 13 resolve a capability or a parameter schema against
+the node registry, and `packages/ffir` must not depend on the registry, so they
+are stages 2 and 3 and are owned by `packages/ai`. The other fifteen need only
+the document and are stage 4, in `ffir`.
+
+| Rules | Stage | Owner |
+| --- | --- | --- |
+| 19 | 0 | `ffir` |
+| 7, 8, 13 | 2 and 3 | `ai` |
+| 1 to 6, 9 to 12, 14 to 18 | 4 | `ffir` |
+
+`RULE_OWNERSHIP` in `packages/ffir/src/validate/graph.ts` is this table in code,
+so the split is checkable rather than remembered.
+
 Each rule maps to a distinct machine-readable error code so the repair prompt
 can tell the model precisely what to fix. Rules 1 through 13 are repairable by
 re-prompting. Rules 14 through 18 are also repairable but are logged separately

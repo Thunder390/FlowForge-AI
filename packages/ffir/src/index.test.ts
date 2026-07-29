@@ -4,9 +4,12 @@ import { onboardingExample } from "./__fixtures__/index.js";
 import {
   DOCUMENT_LIMITS,
   ErrorCode,
+  checkGraph,
+  findSecret,
   isLiteralTemplate,
   parseTemplate,
   validateStructure,
+  validateWithoutRegistry,
 } from "./index.js";
 
 /**
@@ -19,6 +22,12 @@ describe("package entry point", () => {
     expect(validateStructure(onboardingExample).ok).toBe(true);
     expect(DOCUMENT_LIMITS.max_nodes).toBe(150);
     expect(ErrorCode.EXPRESSION_PARSE_ERROR).toBe("expression_parse_error");
+  });
+
+  it("exposes the graph validator and the secret scanner", () => {
+    expect(checkGraph(onboardingExample).ok).toBe(true);
+    expect(validateWithoutRegistry(onboardingExample).ok).toBe(true);
+    expect(findSecret("AKIAIOSFODNN7EXAMPLE")?.pattern).toBe("aws_access_key_id");
   });
 
   it("exposes the expression parser", () => {

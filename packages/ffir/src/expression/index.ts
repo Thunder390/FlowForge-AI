@@ -39,6 +39,7 @@ export type {
 export {
   parseTemplate,
   checkTemplate,
+  checkGrammar,
   isSupportedGrammar,
   supportedGrammars,
   type ParseOptions,

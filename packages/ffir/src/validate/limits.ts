@@ -11,6 +11,7 @@
  */
 
 import { DOCUMENT_LIMITS, type LimitName } from "../limits.js";
+import { escapePointer } from "../pointer.js";
 import { ErrorCode } from "./codes.js";
 import { invalid, type ValidationError, type ValidationResult } from "./result.js";
 
@@ -241,11 +242,6 @@ function checkNodeParameters(
       }
     }
   }
-}
-
-/** RFC 6901 escaping, so a parameter named `a/b` produces a usable pointer. */
-function escapePointer(segment: string): string {
-  return segment.replace(/~/g, "~0").replace(/\//g, "~1");
 }
 
 function describe(value: unknown): string {

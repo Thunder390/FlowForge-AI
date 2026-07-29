@@ -60,6 +60,19 @@ export function supportedGrammars(): string[] {
 }
 
 /**
+ * Checks the declared grammar version once, for callers about to parse many
+ * strings from one document.
+ *
+ * The grammar is a property of the document, so an unreadable one is a single
+ * finding. Reporting it once per parameter would bury every other failure in
+ * the list the repair prompt is built from.
+ */
+export function checkGrammar(grammar: string, path = ""): ValidationResult {
+  if (isSupportedGrammar(grammar)) return invalid([]);
+  return invalid([unsupportedGrammarError(grammar, path)]);
+}
+
+/**
  * Parses one parameter string under the given grammar version.
  *
  * A string with no braces in it is a valid template with a single literal part,
