@@ -1,0 +1,75 @@
+{
+  "integration": "http",
+  "display_name": "HTTP Request",
+  "description": "The universal escape hatch. Any integration without a first-class registry entry lowers to a raw HTTP call, on every platform.",
+  "categories": ["core"],
+  "aliases": ["rest api", "call an api", "web request", "hit an endpoint"],
+  "docs_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP",
+  "auth": [],
+  "capabilities": [
+    {
+      "id": "http.request.send",
+      "kind": "action",
+      "display_name": "HTTP request",
+      "description": "Sends an HTTP request and returns the response. Used directly when no first-class capability exists, and used as the degradation target when a platform cannot express one. Authentication is carried in headers, normally from a sensitive workflow variable, because a degraded step cannot know what credential the provider wanted.",
+      "aliases": [
+        "send an http request",
+        "call a rest api",
+        "post to a webhook url",
+        "fetch from a url",
+        "make an api call"
+      ],
+      "parameters": {
+        "method": {
+          "type": "enum",
+          "required": false,
+          "default": "GET",
+          "description": "The HTTP method.",
+          "values": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+          "example": "POST"
+        },
+        "url": {
+          "type": "string",
+          "required": true,
+          "description": "The full URL, including scheme. May contain expressions in the path or query.",
+          "validation": { "pattern": "^https?://" },
+          "example": "https://api.example.com/v1/orders"
+        },
+        "headers": {
+          "type": "object",
+          "required": false,
+          "description": "Request headers as name and value pairs. Put an API key here, referencing a sensitive variable rather than a literal.",
+          "example": { "Authorization": "Bearer {{ $vars.api_token }}" }
+        },
+        "query": {
+          "type": "object",
+          "required": false,
+          "description": "Query string parameters as name and value pairs."
+        },
+        "body": {
+          "type": "object",
+          "required": false,
+          "description": "The JSON request body. Ignored for methods that do not carry one."
+        },
+        "timeout_ms": {
+          "type": "number",
+          "required": false,
+          "default": 30000,
+          "description": "How long to wait for a response before failing the step.",
+          "validation": { "min": 1000, "max": 300000 }
+        }
+      },
+      "output": {
+        "status_code": { "type": "number", "description": "The HTTP status code." },
+        "headers": { "type": "object", "description": "Response headers." },
+        "body": { "type": "object", "description": "The parsed response body." }
+      }
+    }
+  ],
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

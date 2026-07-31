@@ -1,0 +1,272 @@
+{
+  "version": "n8n@1.62.0+overlay.3",
+  "integrations": [
+    {
+      "integration": "bamboohr",
+      "display_name": "BambooHR",
+      "aliases": [
+        "bamboo hr",
+        "bamboo",
+        "our hr system",
+        "hris"
+      ],
+      "categories": [
+        "hr"
+      ]
+    },
+    {
+      "integration": "core",
+      "display_name": "Core",
+      "aliases": [
+        "core primitive",
+        "built in step"
+      ],
+      "categories": [
+        "core"
+      ]
+    },
+    {
+      "integration": "google_workspace",
+      "display_name": "Google Workspace",
+      "aliases": [
+        "google workspace",
+        "gsuite",
+        "g suite",
+        "google admin",
+        "workspace admin"
+      ],
+      "categories": [
+        "identity",
+        "productivity"
+      ]
+    },
+    {
+      "integration": "http",
+      "display_name": "HTTP Request",
+      "aliases": [
+        "rest api",
+        "call an api",
+        "web request",
+        "hit an endpoint"
+      ],
+      "categories": [
+        "core"
+      ]
+    },
+    {
+      "integration": "openai",
+      "display_name": "OpenAI",
+      "aliases": [
+        "openai",
+        "chatgpt",
+        "gpt",
+        "a language model",
+        "an llm"
+      ],
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "integration": "slack",
+      "display_name": "Slack",
+      "aliases": [
+        "slack workspace",
+        "slack channel",
+        "team chat"
+      ],
+      "categories": [
+        "communication"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "capability_id": "bamboohr.employee.created",
+      "integration": "bamboohr",
+      "kind": "trigger",
+      "display_name": "New employee created",
+      "description": "Fires when a new employee record is added in BambooHR.",
+      "aliases": [
+        "new employee",
+        "new hire",
+        "when someone joins",
+        "new starter",
+        "employee added in bamboohr"
+      ],
+      "categories": [
+        "hr"
+      ]
+    },
+    {
+      "capability_id": "core.branch.if",
+      "integration": "core",
+      "kind": "branch",
+      "display_name": "Conditional branch",
+      "description": "Splits execution down one path or another. The condition lives on each outbound edge, so a compound test is a chain of these rather than a nested boolean tree.",
+      "aliases": [
+        "if this then that",
+        "conditional split",
+        "check a condition",
+        "only continue if",
+        "branch on a value"
+      ],
+      "categories": [
+        "core"
+      ]
+    },
+    {
+      "capability_id": "core.loop.for_each",
+      "integration": "core",
+      "kind": "loop",
+      "display_name": "For each item",
+      "description": "Iterates over a collection. Edges from the each port form the body and the last body node connects back to this node; the done port continues after iteration finishes.",
+      "aliases": [
+        "for each item",
+        "loop over a list",
+        "iterate over rows",
+        "repeat for every",
+        "go through each one"
+      ],
+      "categories": [
+        "core"
+      ]
+    },
+    {
+      "capability_id": "core.merge.collect",
+      "integration": "core",
+      "kind": "merge",
+      "display_name": "Merge branches",
+      "description": "Rejoins branches into one stream. Inbound edges are ordered by source node ID, so the merged result is deterministic.",
+      "aliases": [
+        "merge branches",
+        "join branches",
+        "combine results",
+        "bring the branches back together"
+      ],
+      "categories": [
+        "core"
+      ]
+    },
+    {
+      "capability_id": "core.transform.map",
+      "integration": "core",
+      "kind": "transform",
+      "display_name": "Set fields",
+      "description": "Reshapes data by assigning named fields from literals or expressions. Pure: it has no side effects. Expressions carry no arithmetic, so anything needing real computation becomes an assignment here.",
+      "aliases": [
+        "set a field",
+        "map fields",
+        "build a value",
+        "reshape the data",
+        "compute a value"
+      ],
+      "categories": [
+        "core"
+      ]
+    },
+    {
+      "capability_id": "core.wait.delay",
+      "integration": "core",
+      "kind": "wait",
+      "display_name": "Wait",
+      "description": "Pauses the workflow for a fixed duration before continuing.",
+      "aliases": [
+        "wait",
+        "pause the workflow",
+        "delay",
+        "sleep for a while",
+        "hold before continuing"
+      ],
+      "categories": [
+        "core"
+      ]
+    },
+    {
+      "capability_id": "google_workspace.user.create",
+      "integration": "google_workspace",
+      "kind": "action",
+      "display_name": "Create a user",
+      "description": "Creates a Google Workspace user account and mailbox.",
+      "aliases": [
+        "create a google account",
+        "create a workspace user",
+        "provision an email address",
+        "set up their email",
+        "new google workspace account"
+      ],
+      "categories": [
+        "identity",
+        "productivity"
+      ]
+    },
+    {
+      "capability_id": "http.request.send",
+      "integration": "http",
+      "kind": "action",
+      "display_name": "HTTP request",
+      "description": "Sends an HTTP request and returns the response. Used directly when no first-class capability exists, and used as the degradation target when a platform cannot express one. Authentication is carried in headers, normally from a sensitive workflow variable, because a degraded step cannot know what credential the provider wanted.",
+      "aliases": [
+        "send an http request",
+        "call a rest api",
+        "post to a webhook url",
+        "fetch from a url",
+        "make an api call"
+      ],
+      "categories": [
+        "core"
+      ]
+    },
+    {
+      "capability_id": "openai.chat.complete",
+      "integration": "openai",
+      "kind": "ai",
+      "display_name": "Ask a model",
+      "description": "Sends a prompt to an OpenAI chat model and returns the completion. Runs on the workflow owner's own credential and has nothing to do with the model that generated the workflow.",
+      "aliases": [
+        "ask an ai",
+        "summarise with ai",
+        "classify with ai",
+        "generate text",
+        "extract fields with ai"
+      ],
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "capability_id": "slack.channel.create",
+      "integration": "slack",
+      "kind": "action",
+      "display_name": "Create a channel",
+      "description": "Creates a new public or private channel in the workspace.",
+      "aliases": [
+        "create a slack channel",
+        "open a new channel",
+        "spin up a channel",
+        "make a slack channel"
+      ],
+      "categories": [
+        "communication"
+      ]
+    },
+    {
+      "capability_id": "slack.message.send",
+      "integration": "slack",
+      "kind": "action",
+      "display_name": "Send a message",
+      "description": "Posts a message to a channel, DM, or thread.",
+      "aliases": [
+        "send slack message",
+        "post to slack",
+        "notify in slack",
+        "slack alert",
+        "announce in slack",
+        "message the team"
+      ],
+      "categories": [
+        "communication"
+      ]
+    }
+  ]
+}

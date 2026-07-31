@@ -1,0 +1,50 @@
+{
+  "integration": "core",
+  "platform": "n8n",
+  "bindings": {
+    "core.branch.if": {
+      "node_type": "n8n-nodes-base.if",
+      "type_version": 2.2,
+      "parameter_map": { "case_sensitive": "options.caseSensitive" }
+    },
+    "core.loop.for_each": {
+      "node_type": "n8n-nodes-base.splitInBatches",
+      "type_version": 3,
+      "parameter_map": { "batch_size": "batchSize" }
+    },
+    "core.merge.collect": {
+      "node_type": "n8n-nodes-base.merge",
+      "type_version": 3,
+      "parameter_map": {
+        "mode": "mode",
+        "combine_by_fields": "fieldsToMatchString"
+      },
+      "transform": {
+        "mode": "enum_to_camel_case",
+        "combine_by_fields": "array_to_comma_string"
+      }
+    },
+    "core.transform.map": {
+      "node_type": "n8n-nodes-base.set",
+      "type_version": 3.4,
+      "static_parameters": { "mode": "manual" },
+      "parameter_map": {
+        "assignments": "assignments.assignments",
+        "include_other_fields": "includeOtherFields"
+      },
+      "transform": { "assignments": "assignments_to_set_fields" }
+    },
+    "core.wait.delay": {
+      "node_type": "n8n-nodes-base.wait",
+      "type_version": 1.1,
+      "static_parameters": { "resume": "timeInterval", "unit": "seconds" },
+      "parameter_map": { "duration_seconds": "amount" }
+    }
+  },
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

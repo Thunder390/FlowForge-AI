@@ -1,0 +1,26 @@
+{
+  "integration": "google_workspace",
+  "platform": "n8n",
+  "bindings": {
+    "google_workspace.user.create": {
+      "node_type": "n8n-nodes-base.gSuiteAdmin",
+      "type_version": 1,
+      "static_parameters": { "resource": "user", "operation": "create" },
+      "parameter_map": {
+        "primary_email": "primaryEmail",
+        "given_name": "firstName",
+        "family_name": "lastName",
+        "password": "password",
+        "change_password_at_next_login": "additionalFields.changePasswordAtNextLogin",
+        "org_unit_path": "additionalFields.orgUnitPath"
+      },
+      "credential_key": "gSuiteAdminOAuth2Api"
+    }
+  },
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

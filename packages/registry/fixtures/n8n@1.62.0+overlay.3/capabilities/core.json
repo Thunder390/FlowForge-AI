@@ -1,0 +1,182 @@
+{
+  "integration": "core",
+  "display_name": "Core",
+  "description": "Platform-agnostic primitives with no external integration. FFIR itself depends on these, so every target must implement all of them.",
+  "categories": ["core"],
+  "aliases": ["core primitive", "built in step"],
+  "auth": [],
+  "capabilities": [
+    {
+      "id": "core.branch.if",
+      "kind": "branch",
+      "display_name": "Conditional branch",
+      "description": "Splits execution down one path or another. The condition lives on each outbound edge, so a compound test is a chain of these rather than a nested boolean tree.",
+      "aliases": [
+        "if this then that",
+        "conditional split",
+        "check a condition",
+        "only continue if",
+        "branch on a value"
+      ],
+      "parameters": {
+        "case_sensitive": {
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "description": "Compare string operands case-sensitively. Turn off when matching user-entered text such as an email address or a status word."
+        }
+      }
+    },
+    {
+      "id": "core.loop.for_each",
+      "kind": "loop",
+      "display_name": "For each item",
+      "description": "Iterates over a collection. Edges from the each port form the body and the last body node connects back to this node; the done port continues after iteration finishes.",
+      "aliases": [
+        "for each item",
+        "loop over a list",
+        "iterate over rows",
+        "repeat for every",
+        "go through each one"
+      ],
+      "parameters": {
+        "items": {
+          "type": "string",
+          "required": true,
+          "description": "An expression naming the collection to iterate over.",
+          "example": "{{ n_sheets_read.rows }}"
+        },
+        "item_alias": {
+          "type": "string",
+          "required": false,
+          "default": "item",
+          "description": "How the current item is referenced inside the body, as {{ <this node id>.<alias>.<field> }}.",
+          "validation": { "pattern": "^[a-z][a-z0-9_]*$" },
+          "example": "row"
+        },
+        "max_iterations": {
+          "type": "number",
+          "required": true,
+          "description": "Hard upper bound on iterations. An unbounded loop is a validation error: it is the failure mode that burns a client's task quota on a metered platform.",
+          "validation": { "min": 1, "max": 10000 },
+          "example": 500
+        },
+        "batch_size": {
+          "type": "number",
+          "required": false,
+          "default": 1,
+          "description": "How many items to hand the body per iteration.",
+          "validation": { "min": 1, "max": 1000 }
+        }
+      }
+    },
+    {
+      "id": "core.merge.collect",
+      "kind": "merge",
+      "display_name": "Merge branches",
+      "description": "Rejoins branches into one stream. Inbound edges are ordered by source node ID, so the merged result is deterministic.",
+      "aliases": [
+        "merge branches",
+        "join branches",
+        "combine results",
+        "bring the branches back together"
+      ],
+      "parameters": {
+        "mode": {
+          "type": "enum",
+          "required": false,
+          "default": "append",
+          "description": "How to combine the inbound streams. Append concatenates them, combine joins them on matching fields, and choose_branch passes through whichever branch produced data.",
+          "values": ["append", "combine", "choose_branch"],
+          "example": "append"
+        },
+        "combine_by_fields": {
+          "type": "array",
+          "required": false,
+          "description": "Field names to join on. Needed only when mode is combine.",
+          "items": {
+            "type": "string",
+            "required": true,
+            "description": "One field name present on both inbound streams."
+          },
+          "conditional_required": { "when": { "mode": { "equals": "combine" } } },
+          "example": ["id"]
+        }
+      }
+    },
+    {
+      "id": "core.transform.map",
+      "kind": "transform",
+      "display_name": "Set fields",
+      "description": "Reshapes data by assigning named fields from literals or expressions. Pure: it has no side effects. Expressions carry no arithmetic, so anything needing real computation becomes an assignment here.",
+      "aliases": [
+        "set a field",
+        "map fields",
+        "build a value",
+        "reshape the data",
+        "compute a value"
+      ],
+      "parameters": {
+        "assignments": {
+          "type": "array",
+          "required": true,
+          "description": "The fields to set. Assigning no fields is a validation error rather than an identity step.",
+          "validation": { "not_empty": true },
+          "items": {
+            "type": "object",
+            "required": true,
+            "description": "One field assignment.",
+            "fields": {
+              "field": {
+                "type": "string",
+                "required": true,
+                "description": "The name of the field to write.",
+                "example": "email"
+              },
+              "value": {
+                "type": "string",
+                "required": true,
+                "description": "The value to write, as a literal or an expression template.",
+                "example": "{{ n_trigger.employee.first_name }}"
+              }
+            }
+          }
+        },
+        "include_other_fields": {
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "description": "Pass upstream fields through alongside the assignments. Turn off to emit only the assigned fields."
+        }
+      }
+    },
+    {
+      "id": "core.wait.delay",
+      "kind": "wait",
+      "display_name": "Wait",
+      "description": "Pauses the workflow for a fixed duration before continuing.",
+      "aliases": [
+        "wait",
+        "pause the workflow",
+        "delay",
+        "sleep for a while",
+        "hold before continuing"
+      ],
+      "parameters": {
+        "duration_seconds": {
+          "type": "number",
+          "required": true,
+          "description": "How long to pause, in whole seconds. Platforms disagree about sub-second precision, so this is seconds rather than milliseconds.",
+          "validation": { "min": 1, "max": 604800 },
+          "example": 300
+        }
+      }
+    }
+  ],
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

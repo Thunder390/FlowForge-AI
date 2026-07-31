@@ -1,0 +1,137 @@
+{
+  "integration": "slack",
+  "display_name": "Slack",
+  "description": "Team messaging and collaboration.",
+  "categories": ["communication"],
+  "aliases": ["slack workspace", "slack channel", "team chat"],
+  "docs_url": "https://api.slack.com/",
+  "auth": [
+    {
+      "id": "slack_oauth2",
+      "type": "oauth2",
+      "label": "Slack OAuth2",
+      "default": true,
+      "scopes_available": [
+        "chat:write",
+        "chat:write.public",
+        "channels:read",
+        "channels:manage",
+        "files:write"
+      ],
+      "setup_notes": "Create a Slack app, add bot token scopes, install to workspace."
+    },
+    {
+      "id": "slack_api_token",
+      "type": "api_key",
+      "label": "Slack bot token",
+      "default": false,
+      "field_hint": "Starts with xoxb-",
+      "setup_notes": "Use OAuth2 unless you need a long-lived static token."
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "slack.channel.create",
+      "kind": "action",
+      "display_name": "Create a channel",
+      "description": "Creates a new public or private channel in the workspace.",
+      "aliases": [
+        "create a slack channel",
+        "open a new channel",
+        "spin up a channel",
+        "make a slack channel"
+      ],
+      "auth_required": "slack_oauth2",
+      "required_scopes": ["channels:manage"],
+      "parameters": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Channel name without the leading #. Lowercase, no spaces, up to 80 characters.",
+          "validation": { "pattern": "^[a-z0-9._-]{1,80}$" },
+          "example": "project-apollo"
+        }
+      },
+      "output": {
+        "ok": { "type": "boolean" },
+        "channel": {
+          "type": "object",
+          "description": "The created channel.",
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      },
+      "rate_limit": {
+        "requests_per_minute": 20,
+        "notes": "Slack Tier 2. Channel creation is rate limited well below messaging."
+      }
+    },
+    {
+      "id": "slack.message.send",
+      "kind": "action",
+      "display_name": "Send a message",
+      "description": "Posts a message to a channel, DM, or thread.",
+      "aliases": [
+        "send slack message",
+        "post to slack",
+        "notify in slack",
+        "slack alert",
+        "announce in slack",
+        "message the team"
+      ],
+      "auth_required": "slack_oauth2",
+      "required_scopes": ["chat:write"],
+      "parameters": {
+        "channel": {
+          "type": "string",
+          "required": true,
+          "description": "Channel name with #, user with @, or a channel ID.",
+          "validation": { "pattern": "^([#@][a-z0-9._-]+|[CDG][A-Z0-9]{8,})$" },
+          "example": "#general"
+        },
+        "text": {
+          "type": "string",
+          "required": true,
+          "description": "Message body. Supports Slack mrkdwn.",
+          "example": "Deploy finished successfully."
+        },
+        "thread_ts": {
+          "type": "string",
+          "required": false,
+          "description": "Reply in a thread by passing the parent message timestamp."
+        },
+        "blocks": {
+          "type": "array",
+          "required": false,
+          "description": "Slack Block Kit payload. Use instead of text for rich layouts.",
+          "items": {
+            "type": "object",
+            "required": true,
+            "description": "One Block Kit block."
+          },
+          "conditional_required": { "when": { "text": { "is_empty": true } } }
+        }
+      },
+      "output": {
+        "ok": { "type": "boolean" },
+        "ts": {
+          "type": "string",
+          "description": "Message timestamp. Use for threading."
+        },
+        "channel": { "type": "string" }
+      },
+      "rate_limit": {
+        "requests_per_minute": 60,
+        "notes": "Slack Tier 3. Bursts are tolerated; sustained load is not."
+      }
+    }
+  ],
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

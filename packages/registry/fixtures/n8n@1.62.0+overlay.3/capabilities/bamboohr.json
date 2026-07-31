@@ -1,0 +1,77 @@
+{
+  "integration": "bamboohr",
+  "display_name": "BambooHR",
+  "description": "HR platform holding employee records, time off, and onboarding.",
+  "categories": ["hr"],
+  "aliases": ["bamboo hr", "bamboo", "our hr system", "hris"],
+  "docs_url": "https://documentation.bamboohr.com/docs",
+  "auth": [
+    {
+      "id": "bamboohr_api_key",
+      "type": "api_key",
+      "label": "BambooHR API key",
+      "default": true,
+      "field_hint": "Generated from your BambooHR profile, under API Keys.",
+      "setup_notes": "In BambooHR, open your profile menu, choose API Keys, and generate a new one. You also need your company subdomain, which is the part before .bamboohr.com in your URL."
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "bamboohr.employee.created",
+      "kind": "trigger",
+      "display_name": "New employee created",
+      "description": "Fires when a new employee record is added in BambooHR.",
+      "aliases": [
+        "new employee",
+        "new hire",
+        "when someone joins",
+        "new starter",
+        "employee added in bamboohr"
+      ],
+      "auth_required": "bamboohr_api_key",
+      "parameters": {
+        "poll_interval_minutes": {
+          "type": "number",
+          "required": false,
+          "default": 15,
+          "description": "How often to check for new employee records, in minutes. Ignored on platforms where this lowers to a webhook.",
+          "validation": { "min": 5, "max": 1440 },
+          "example": 15
+        }
+      },
+      "output": {
+        "employee": {
+          "type": "object",
+          "description": "The newly created employee record.",
+          "fields": {
+            "id": { "type": "string", "description": "BambooHR employee ID." },
+            "first_name": { "type": "string" },
+            "last_name": { "type": "string" },
+            "work_email": {
+              "type": "string",
+              "description": "Often empty for a brand new hire, which is why onboarding flows construct the address rather than reading it."
+            },
+            "job_title": { "type": "string" },
+            "department": { "type": "string" },
+            "hire_date": { "type": "datetime" }
+          }
+        }
+      },
+      "trigger": {
+        "mechanism": "polling",
+        "poll_interval_minutes": { "default": 15, "min": 5 },
+        "fallback": "webhook"
+      },
+      "rate_limit": {
+        "requests_per_minute": 30,
+        "notes": "BambooHR throttles per subdomain, so a short poll interval across several workflows adds up."
+      }
+    }
+  ],
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flowforge.dev/schema/registry/binding-file.json",
+  "title": "Registry Binding File",
+  "description": "One bindings/<platform>/<integration>.json artifact. Compiler-facing. Kept out of the capability file because the n8n bindings are machine-generated on every regeneration while the Make and Zapier bindings are hand-curated, and putting a generator's output and human curation in one file guarantees eventual clobbering. Adding a platform then adds a directory and touches no existing file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["integration", "platform", "bindings", "source"],
+  "properties": {
+    "integration": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "platform": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "description": "The target key. Must match the directory this file sits in."
+    },
+    "bindings": {
+      "type": "object",
+      "description": "Keyed by capability ID, the join key to the capability file. A null value means this platform genuinely cannot do this and degrades to http.request.send with a warning. An absent key means not yet mapped, which is a registry gap. The compiler treats them differently, so the format has to be able to say both.",
+      "propertyNames": { "$ref": "#/$defs/capabilityId" },
+      "additionalProperties": {
+        "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/binding" }]
+      }
+    },
+    "source": { "$ref": "#/$defs/source" }
+  },
+
+  "$defs": {
+    "capabilityId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+$"
+    },
+
+    "parameterName": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+
+    "parameterValue": {
+      "description": "Any JSON literal. A platform's fixed parameter values are whatever that platform accepts."
+    },
+
+    "staticParameters": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/parameterValue" },
+      "description": "Platform params with fixed values and no FFIR equivalent. n8n's Slack node needs resource: message and operation: post to mean send a message; those live here rather than polluting FFIR with platform vocabulary."
+    },
+
+    "parameterMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/parameterName" },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The platform path. Dots mean nesting, so otherOptions.thread_ts builds a nested object."
+      },
+      "description": "Build validation rule 4: every key must name a parameter the capability declares."
+    },
+
+    "transformMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/parameterName" },
+      "additionalProperties": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+      "description": "Names a function in the target's closed, unit-tested transform table. Arbitrary transform code in registry data would make the registry executable, and generated registry data must never be executable."
+    },
+
+    "credentialKey": { "type": "string", "minLength": 1 },
+
+    "n8nBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_type", "type_version"],
+      "properties": {
+        "node_type": { "type": "string", "minLength": 1 },
+        "type_version": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Pinned. Bumping it is a deliberate act."
+        },
+        "static_parameters": { "$ref": "#/$defs/staticParameters" },
+        "parameter_map": { "$ref": "#/$defs/parameterMap" },
+        "transform": { "$ref": "#/$defs/transformMap" },
+        "credential_key": { "$ref": "#/$defs/credentialKey" }
+      }
+    },
+
+    "makeBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module"],
+      "properties": {
+        "module": { "type": "string", "minLength": 1 },
+        "static_parameters": { "$ref": "#/$defs/staticParameters" },
+        "parameter_map": { "$ref": "#/$defs/parameterMap" },
+        "transform": { "$ref": "#/$defs/transformMap" },
+        "credential_key": { "$ref": "#/$defs/credentialKey" }
+      }
+    },
+
+    "zapierBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["app", "action"],
+      "properties": {
+        "app": { "type": "string", "minLength": 1 },
+        "action": { "type": "string", "minLength": 1 },
+        "static_parameters": { "$ref": "#/$defs/staticParameters" },
+        "parameter_map": { "$ref": "#/$defs/parameterMap" },
+        "transform": { "$ref": "#/$defs/transformMap" },
+        "credential_key": { "$ref": "#/$defs/credentialKey" }
+      }
+    },
+
+    "binding": {
+      "description": "A binding is shaped by its platform. n8n names a node type and a pinned version, Make names a module, Zapier names an app and an action. Only n8n is bound in the MVP; the other two are declared because the format has to prove it can carry them before the claim that adding a platform is cheap means anything.",
+      "oneOf": [
+        { "$ref": "#/$defs/n8nBinding" },
+        { "$ref": "#/$defs/makeBinding" },
+        { "$ref": "#/$defs/zapierBinding" }
+      ]
+    },
+
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generated_from", "generated_at", "overlay_version"],
+      "properties": {
+        "generated_from": { "type": "string", "minLength": 1 },
+        "generated_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "overlay_version": { "type": "integer", "minimum": 0 },
+        "hand_written": { "type": "boolean" }
+      }
+    }
+  }
+}

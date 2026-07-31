@@ -67,6 +67,27 @@ generator yet.
 right entry, alias search finds `slack.message.send` from "post to slack", and
 the split `capabilities/` and `bindings/n8n/` artifacts join correctly by ID.
 
+Met on 2026-07-31. 204 tests. Six integrations: `core` and `http` for the two
+reserved namespaces, `slack`, `bamboohr`, and `google_workspace` for the worked
+example, and `openai` so that every node kind except `error_handler` has a
+capability behind it, which M6 needs for a golden case per kind. The artifacts
+live in `packages/registry/fixtures/<version>/`, a sibling of the gitignored
+`build/`, because M20 has to diff a generated build against them.
+
+`buildIndex` is a pure function and a test asserts the shipped `index.json` is
+byte-identical to its output, so the one derived artifact cannot go stale.
+
+The loader enforces the subset of the seven build validation rules that are
+properties of a loaded registry rather than of a build process: a duplicate ID,
+an orphaned binding, a colliding alias, or a `parameter_map` naming an
+undeclared parameter would each corrupt the in-memory model silently. The full
+gate stays with the generator in M20. `validate-params.ts` is deliberately
+absent, being validation stage 3 and therefore M5.
+
+The bindings are written from n8n's documentation rather than from
+introspection, which makes node types and parameter paths the fixtures' weakest
+claim. M20's generator and M9's manual import gate are what settle them.
+
 ### M5. Parameter validation
 Validation stages 2 and 3, including the parameter **name** check.
 

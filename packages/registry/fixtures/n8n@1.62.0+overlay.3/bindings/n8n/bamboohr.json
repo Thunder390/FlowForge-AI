@@ -1,0 +1,21 @@
+{
+  "integration": "bamboohr",
+  "platform": "n8n",
+  "bindings": {
+    "bamboohr.employee.created": {
+      "node_type": "n8n-nodes-base.webhook",
+      "type_version": 2,
+      "static_parameters": {
+        "httpMethod": "POST",
+        "path": "bamboohr-employee-created",
+        "responseMode": "onReceived"
+      }
+    }
+  },
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

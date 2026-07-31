@@ -1,0 +1,30 @@
+{
+  "integration": "http",
+  "platform": "n8n",
+  "bindings": {
+    "http.request.send": {
+      "node_type": "n8n-nodes-base.httpRequest",
+      "type_version": 4.2,
+      "static_parameters": { "sendBody": true, "specifyBody": "json" },
+      "parameter_map": {
+        "method": "method",
+        "url": "url",
+        "headers": "headerParameters",
+        "query": "queryParameters",
+        "body": "jsonBody",
+        "timeout_ms": "options.timeout"
+      },
+      "transform": {
+        "headers": "object_to_name_value_pairs",
+        "query": "object_to_name_value_pairs",
+        "body": "object_to_json_string"
+      }
+    }
+  },
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

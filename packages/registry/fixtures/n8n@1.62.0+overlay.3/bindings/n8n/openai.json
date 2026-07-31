@@ -1,0 +1,25 @@
+{
+  "integration": "openai",
+  "platform": "n8n",
+  "bindings": {
+    "openai.chat.complete": {
+      "node_type": "n8n-nodes-base.openAi",
+      "type_version": 1.1,
+      "static_parameters": { "resource": "text", "operation": "message" },
+      "parameter_map": {
+        "model": "model",
+        "prompt": "prompt",
+        "system_prompt": "options.systemMessage",
+        "temperature": "options.temperature",
+        "max_tokens": "options.maxTokens"
+      },
+      "credential_key": "openAiApi"
+    }
+  },
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

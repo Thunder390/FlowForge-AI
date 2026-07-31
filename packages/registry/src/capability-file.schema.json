@@ -1,0 +1,366 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flowforge.dev/schema/registry/capability-file.json",
+  "title": "Registry Capability File",
+  "description": "One capabilities/<integration>.json artifact. AI-facing and platform-neutral: parameters, outputs, aliases, and auth. Carries no platform vocabulary at all, because the AI layer never reads bindings and loading platform implementation detail into a context budget is what makes capability coverage expensive.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "integration",
+    "display_name",
+    "description",
+    "categories",
+    "aliases",
+    "auth",
+    "capabilities",
+    "source"
+  ],
+  "properties": {
+    "integration": { "$ref": "#/$defs/integrationId" },
+    "display_name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "categories": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "aliases": { "$ref": "#/$defs/aliasList" },
+    "docs_url": { "type": "string", "pattern": "^https?://" },
+    "auth": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/authDefinition" }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "source": { "$ref": "#/$defs/source" }
+  },
+
+  "$defs": {
+    "integrationId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "description": "The integration segment of a capability ID."
+    },
+
+    "capabilityId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+$",
+      "description": "Build validation rule 1. <integration>.<resource>.<operation>, lowercase snake_case, stable forever."
+    },
+
+    "aliasList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "The retrieval vocabulary. Hand-curated, because the upstream node package does not carry the words real users type."
+    },
+
+    "nodeKind": {
+      "type": "string",
+      "enum": [
+        "trigger",
+        "action",
+        "transform",
+        "branch",
+        "merge",
+        "loop",
+        "ai",
+        "wait",
+        "error_handler"
+      ]
+    },
+
+    "parameterType": {
+      "type": "string",
+      "enum": [
+        "string",
+        "number",
+        "boolean",
+        "array",
+        "object",
+        "enum",
+        "datetime"
+      ]
+    },
+
+    "parameterValue": {
+      "description": "Any JSON literal. Deliberately unconstrained: the shape of a parameter's value is what `type` and `validation` describe, and constraining it twice would let the two disagree. Registry data is data, so nothing here is ever executed."
+    },
+
+    "authDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "label", "default"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "type": {
+          "type": "string",
+          "enum": ["oauth2", "api_key", "basic", "webhook_secret", "none"],
+          "description": "Maps directly onto credentials[].auth_type in FFIR."
+        },
+        "label": { "type": "string", "minLength": 1 },
+        "default": { "type": "boolean" },
+        "scopes_available": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "field_hint": { "type": "string" },
+        "setup_notes": {
+          "type": "string",
+          "description": "Rendered verbatim into the generated setup guide, so it is written for the end user."
+        }
+      }
+    },
+
+    "validationRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "description": "Validation as data, so the AI layer and the compiler enforce exactly the same thing.",
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A regular expression. That it compiles is checked at load time rather than here, because JSON Schema cannot express it and a registry carrying an uncompilable pattern would fail on the first document that reached it."
+        },
+        "min_length": { "type": "integer", "minimum": 0 },
+        "max_length": { "type": "integer", "minimum": 0 },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "one_of": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/parameterValue" }
+        },
+        "not_empty": { "type": "boolean" }
+      }
+    },
+
+    "conditionSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "description": "Exactly one key. The closed set of states a sibling parameter can be required against.",
+      "properties": {
+        "is_empty": { "type": "boolean" },
+        "is_not_empty": { "type": "boolean" },
+        "equals": { "$ref": "#/$defs/parameterValue" },
+        "one_of": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/parameterValue" }
+        }
+      }
+    },
+
+    "conditionalRequired": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when"],
+      "properties": {
+        "when": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "$ref": "#/$defs/conditionSpec" },
+          "propertyNames": { "$ref": "#/$defs/parameterName" }
+        }
+      }
+    },
+
+    "parameterName": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Snake_case. Rule 13 checks document parameter keys against these names, so an inconsistent casing convention would surface as a validation failure the model cannot fix."
+    },
+
+    "parameterDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "required", "description"],
+      "properties": {
+        "type": { "$ref": "#/$defs/parameterType" },
+        "required": { "type": "boolean" },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Written for the model. This is prompt text; it earns its tokens."
+        },
+        "default": { "$ref": "#/$defs/parameterValue" },
+        "example": { "$ref": "#/$defs/parameterValue" },
+        "validation": { "$ref": "#/$defs/validationRules" },
+        "conditional_required": { "$ref": "#/$defs/conditionalRequired" },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/parameterValue" },
+          "description": "For enum. The closed list of legal values."
+        },
+        "items": { "$ref": "#/$defs/parameterDefinition" },
+        "fields": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/parameterDefinition" },
+          "propertyNames": { "$ref": "#/$defs/parameterName" }
+        }
+      },
+      "allOf": [
+        {
+          "description": "An enum with no values closes over nothing.",
+          "if": { "properties": { "type": { "const": "enum" } }, "required": ["type"] },
+          "then": {
+            "properties": {
+              "values": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "$ref": "#/$defs/parameterValue" }
+              }
+            },
+            "required": ["values"]
+          }
+        }
+      ]
+    },
+
+    "outputField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "$ref": "#/$defs/parameterType" },
+        "description": { "type": "string" },
+        "fields": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/outputField" },
+          "propertyNames": { "$ref": "#/$defs/parameterName" }
+        },
+        "items": { "$ref": "#/$defs/outputField" }
+      }
+    },
+
+    "triggerSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mechanism"],
+      "properties": {
+        "mechanism": {
+          "type": "string",
+          "enum": ["webhook", "polling", "schedule", "manual"]
+        },
+        "poll_interval_minutes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["default", "min"],
+          "properties": {
+            "default": { "type": "number", "exclusiveMinimum": 0 },
+            "min": { "type": "number", "exclusiveMinimum": 0 },
+            "max": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "fallback": {
+          "type": "string",
+          "enum": ["webhook", "polling", "schedule", "manual"],
+          "description": "Used when a platform cannot support the preferred mechanism. The compiler records a trigger_mechanism_changed warning so the degradation is visible rather than silent."
+        }
+      }
+    },
+
+    "rateLimit": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "requests_per_minute": { "type": "number", "exclusiveMinimum": 0 },
+        "notes": { "type": "string" }
+      }
+    },
+
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "display_name",
+        "description",
+        "aliases",
+        "parameters"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/capabilityId" },
+        "kind": { "$ref": "#/$defs/nodeKind" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "aliases": { "$ref": "#/$defs/aliasList" },
+        "auth_required": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$",
+          "description": "Names an auth definition on the owning integration. Build validation rule 5."
+        },
+        "required_scopes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/parameterDefinition" },
+          "propertyNames": { "$ref": "#/$defs/parameterName" }
+        },
+        "output": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/outputField" },
+          "propertyNames": { "$ref": "#/$defs/parameterName" }
+        },
+        "rate_limit": { "$ref": "#/$defs/rateLimit" },
+        "trigger": { "$ref": "#/$defs/triggerSpec" },
+        "deprecated": { "type": "boolean" },
+        "replaced_by": { "$ref": "#/$defs/capabilityId" }
+      },
+      "allOf": [
+        {
+          "description": "A trigger capability carries the trigger block, and nothing else does.",
+          "if": {
+            "properties": { "kind": { "const": "trigger" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": { "trigger": { "$ref": "#/$defs/triggerSpec" } },
+            "required": ["trigger"]
+          },
+          "else": {
+            "properties": { "trigger": false }
+          }
+        },
+        {
+          "description": "A deprecated capability is never removed, so it needs somewhere to point.",
+          "if": {
+            "properties": { "deprecated": { "const": true } },
+            "required": ["deprecated"]
+          },
+          "then": {
+            "properties": { "replaced_by": { "$ref": "#/$defs/capabilityId" } },
+            "required": ["replaced_by"]
+          }
+        }
+      ]
+    },
+
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generated_from", "generated_at", "overlay_version"],
+      "properties": {
+        "generated_from": { "type": "string", "minLength": 1 },
+        "generated_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "overlay_version": { "type": "integer", "minimum": 0 },
+        "hand_written": {
+          "type": "boolean",
+          "description": "Set on the M4 fixtures. The M20 generator must reproduce these files, at which point the flag comes off."
+        }
+      }
+    }
+  }
+}

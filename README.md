@@ -3,9 +3,9 @@
 **One-liner:** Describe an automation in plain English, get a working n8n
 workflow blueprint: interactive flow diagram, importable JSON, and a setup guide.
 
-- **Status:** Architecture frozen. Implementation started, M3 of 23 done.
+- **Status:** Architecture frozen. Implementation started, M4 of 23 done.
 - **Effort:** Large. See [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md)
-  for 23 session-sized milestones. Next up is M4, the registry format.
+  for 23 session-sized milestones. Next up is M5, parameter validation.
 - **Why it exists:** The headline portfolio piece. A real AI SaaS with a
   non-trivial engineering core, not a wrapper around a chat completion.
 
@@ -83,13 +83,13 @@ lines in [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md).
 
 | Phase | Milestones | What lands | Status |
 | --- | --- | --- | --- |
-| 1. The Engine | M1 to M9 | FFIR, validation, registry, n8n compiler, renderers, AI layer. No UI. | In progress, M3 of 9 |
+| 1. The Engine | M1 to M9 | FFIR, validation, registry, n8n compiler, renderers, AI layer. No UI. | In progress, M4 of 9 |
 | 2. The Service | M10 to M13 | Postgres, durable jobs, API and SSE, auth and tenancy, metering | Not started |
 | 3. The Product | M14 to M19 | Results view, canvas, generation UX, chat iteration, dashboard, landing | Not started |
 | 4. Durability | M20 to M23 | Registry generator, eval harness, observability, marketplace | Not started |
 
-**Current milestone: M3 complete.** Next is M4, the registry format, which
-unblocks validation stages 2 and 3.
+**Current milestone: M4 complete.** Next is M5, parameter validation: stages 2
+and 3 now have a registry to resolve against.
 
 ## Documents
 
@@ -123,9 +123,11 @@ pnpm test        # every package
 pnpm typecheck
 ```
 
-Requires Node 20.11 or newer and pnpm 10. Built so far: `packages/config` and
+Requires Node 20.11 or newer and pnpm 10. Built so far: `packages/config`,
 `packages/ffir` (types, JSON Schema, the expression parser, and validation
-stages 0, 1, and 4). Stages 2 and 3 need the registry and arrive with it.
+stages 0, 1, and 4), and `packages/registry` (artifact schemas, the versioned
+loader, the resolver, alias search, and a hand-written six-integration build
+under `fixtures/`). Validation stages 2 and 3 land next, in M5.
 
 ## What It Proves to a Client
 

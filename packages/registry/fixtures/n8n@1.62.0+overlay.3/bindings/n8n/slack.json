@@ -1,0 +1,31 @@
+{
+  "integration": "slack",
+  "platform": "n8n",
+  "bindings": {
+    "slack.channel.create": {
+      "node_type": "n8n-nodes-base.slack",
+      "type_version": 2.2,
+      "static_parameters": { "resource": "channel", "operation": "create" },
+      "parameter_map": { "name": "channelId" },
+      "credential_key": "slackOAuth2Api"
+    },
+    "slack.message.send": {
+      "node_type": "n8n-nodes-base.slack",
+      "type_version": 2.2,
+      "static_parameters": { "resource": "message", "operation": "post" },
+      "parameter_map": {
+        "channel": "channel",
+        "text": "text",
+        "thread_ts": "otherOptions.thread_ts",
+        "blocks": "blocksUi"
+      },
+      "credential_key": "slackOAuth2Api"
+    }
+  },
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

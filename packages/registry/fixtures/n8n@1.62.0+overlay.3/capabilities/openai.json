@@ -1,0 +1,92 @@
+{
+  "integration": "openai",
+  "display_name": "OpenAI",
+  "description": "OpenAI models for text generation, summarization, and structured extraction.",
+  "categories": ["ai"],
+  "aliases": ["openai", "chatgpt", "gpt", "a language model", "an llm"],
+  "docs_url": "https://platform.openai.com/docs",
+  "auth": [
+    {
+      "id": "openai_api_key",
+      "type": "api_key",
+      "label": "OpenAI API key",
+      "default": true,
+      "field_hint": "Starts with sk-",
+      "setup_notes": "Create a key at platform.openai.com under API keys. Usage is billed to whoever owns the key, so prefer a project key over a personal one."
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "openai.chat.complete",
+      "kind": "ai",
+      "display_name": "Ask a model",
+      "description": "Sends a prompt to an OpenAI chat model and returns the completion. Runs on the workflow owner's own credential and has nothing to do with the model that generated the workflow.",
+      "aliases": [
+        "ask an ai",
+        "summarise with ai",
+        "classify with ai",
+        "generate text",
+        "extract fields with ai"
+      ],
+      "auth_required": "openai_api_key",
+      "parameters": {
+        "model": {
+          "type": "enum",
+          "required": false,
+          "default": "gpt-4o-mini",
+          "description": "Which model to call. The mini models are an order of magnitude cheaper and are the right default for classification and extraction.",
+          "values": ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini"],
+          "example": "gpt-4o-mini"
+        },
+        "prompt": {
+          "type": "string",
+          "required": true,
+          "description": "The user message. Reference upstream data with expressions rather than restating it.",
+          "example": "Summarise this support ticket in one sentence: {{ n_ticket.body }}"
+        },
+        "system_prompt": {
+          "type": "string",
+          "required": false,
+          "description": "Instructions that frame the task. This is the workflow author's own prompt: no FlowForge system prompt is ever injected into a generated step.",
+          "example": "You are a support triage assistant. Answer in one sentence."
+        },
+        "temperature": {
+          "type": "number",
+          "required": false,
+          "default": 0.7,
+          "description": "Sampling temperature. Use 0 for classification and extraction, where a stable answer matters more than a varied one.",
+          "validation": { "min": 0, "max": 2 }
+        },
+        "max_tokens": {
+          "type": "number",
+          "required": false,
+          "default": 1024,
+          "description": "Upper bound on the response length. A bound here is what stops a runaway response costing more than the workflow saves.",
+          "validation": { "min": 1, "max": 32000 }
+        },
+        "output_schema": {
+          "type": "object",
+          "required": false,
+          "description": "A JSON Schema the response must match. Supplying one makes the reply parseable, and its fields become referenceable by downstream steps."
+        }
+      },
+      "output": {
+        "text": { "type": "string", "description": "The completion text." },
+        "finish_reason": {
+          "type": "string",
+          "description": "Why generation stopped. A value of length means max_tokens truncated the answer."
+        }
+      },
+      "rate_limit": {
+        "requests_per_minute": 500,
+        "notes": "Depends on the account's usage tier rather than being fixed."
+      }
+    }
+  ],
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}

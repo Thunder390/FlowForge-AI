@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flowforge.dev/schema/registry/index.json",
+  "title": "Registry Retrieval Index",
+  "description": "The compact index.json artifact. Capability IDs, display names, aliases, and one-line descriptions with no parameter schemas, so pass A can be told what exists without being told what everything takes. It sits inline behind a prompt cache breakpoint and is byte-identical across every request, which is what makes it affordable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "integrations", "entries"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The registry version string, n8n@<version>+overlay.<n>. Stamped into every generated document's metadata.registry_version."
+    },
+    "integrations": {
+      "type": "array",
+      "description": "Integration-level vocabulary, held once rather than repeated on every entry. The index is paid for on every request, so duplicating an integration alias across each of its capabilities is a recurring cost.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["integration", "display_name", "aliases", "categories"],
+        "properties": {
+          "integration": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+          "display_name": { "type": "string", "minLength": 1 },
+          "aliases": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "categories": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_id",
+          "integration",
+          "kind",
+          "display_name",
+          "description",
+          "aliases",
+          "categories"
+        ],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+$"
+          },
+          "integration": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trigger",
+              "action",
+              "transform",
+              "branch",
+              "merge",
+              "loop",
+              "ai",
+              "wait",
+              "error_handler"
+            ]
+          },
+          "display_name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "aliases": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "categories": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    }
+  }
+}

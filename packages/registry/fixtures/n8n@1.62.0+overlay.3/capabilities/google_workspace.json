@@ -1,0 +1,94 @@
+{
+  "integration": "google_workspace",
+  "display_name": "Google Workspace",
+  "description": "Google Workspace admin directory: users, groups, and organizational units.",
+  "categories": ["identity", "productivity"],
+  "aliases": ["google workspace", "gsuite", "g suite", "google admin", "workspace admin"],
+  "docs_url": "https://developers.google.com/admin-sdk/directory",
+  "auth": [
+    {
+      "id": "google_workspace_oauth2",
+      "type": "oauth2",
+      "label": "Google Workspace admin",
+      "default": true,
+      "scopes_available": [
+        "https://www.googleapis.com/auth/admin.directory.user",
+        "https://www.googleapis.com/auth/admin.directory.group",
+        "https://www.googleapis.com/auth/admin.directory.orgunit"
+      ],
+      "setup_notes": "Sign in with an account holding Google Workspace super admin rights. Creating users also requires the Admin SDK Directory API to be enabled in the linked Google Cloud project."
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "google_workspace.user.create",
+      "kind": "action",
+      "display_name": "Create a user",
+      "description": "Creates a Google Workspace user account and mailbox.",
+      "aliases": [
+        "create a google account",
+        "create a workspace user",
+        "provision an email address",
+        "set up their email",
+        "new google workspace account"
+      ],
+      "auth_required": "google_workspace_oauth2",
+      "required_scopes": ["https://www.googleapis.com/auth/admin.directory.user"],
+      "parameters": {
+        "primary_email": {
+          "type": "string",
+          "required": true,
+          "description": "The full email address for the new account, including the domain. Usually built upstream from the person's name and the company domain.",
+          "example": "ada.lovelace@example.com"
+        },
+        "given_name": {
+          "type": "string",
+          "required": true,
+          "description": "First name.",
+          "example": "Ada"
+        },
+        "family_name": {
+          "type": "string",
+          "required": true,
+          "description": "Last name.",
+          "example": "Lovelace"
+        },
+        "password": {
+          "type": "string",
+          "required": true,
+          "description": "Initial password. Route this through a sensitive workflow variable rather than writing a literal, because a literal here is a secret committed into a stored blueprint.",
+          "validation": { "min_length": 8 },
+          "example": "{{ $vars.temp_password }}"
+        },
+        "change_password_at_next_login": {
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "description": "Force a password change on first sign-in. Leave on for any account created by automation."
+        },
+        "org_unit_path": {
+          "type": "string",
+          "required": false,
+          "default": "/",
+          "description": "Which organizational unit the account belongs to.",
+          "example": "/Engineering"
+        }
+      },
+      "output": {
+        "id": { "type": "string", "description": "The directory user ID." },
+        "primary_email": { "type": "string" },
+        "is_admin": { "type": "boolean" }
+      },
+      "rate_limit": {
+        "requests_per_minute": 60,
+        "notes": "Admin SDK Directory quota is per project and shared across every workflow using the same credential."
+      }
+    }
+  ],
+  "source": {
+    "generated_from": "n8n-nodes-base@1.62.0",
+    "generated_at": "2026-07-31T00:00:00Z",
+    "overlay_version": 3,
+    "hand_written": true
+  }
+}
