@@ -525,6 +525,15 @@ export {
   type RegistryWarning,
 } from "./load.js";
 export {
+  validateParameters,
+  sameParameterValue,
+  PARAMETER_FAILURES,
+  type ParameterFailure,
+  type ParameterIssue,
+  type UnknownParameterIssue,
+  type ParameterCheck,
+} from "./validate-params.js";
+export {
   resolve,
   resolveForTarget,
   resolveBinding,

@@ -12,3 +12,7 @@ export * from "./types.js";
 export { DOCUMENT_LIMITS, type DocumentLimits, type LimitName } from "./limits.js";
 export * from "./validate/index.js";
 export * from "./expression/index.js";
+// Exported because the registry-dependent stages build pointers into documents
+// too, and a second escaper that disagrees with this one is the same bug as no
+// escaper at all.
+export { pointer, escapePointer } from "./pointer.js";

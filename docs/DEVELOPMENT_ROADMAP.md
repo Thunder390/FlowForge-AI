@@ -96,6 +96,33 @@ rejected, a bad value is rejected by its registry rule, and each produces its ow
 error code. The name check has an explicit test, because it is the one guarding
 against a weaker future provider.
 
+Met on 2026-07-31. 595 tests across the three packages. The rules live in
+`packages/registry/src/validate-params.ts` because they *are* registry data;
+`packages/ai/src/validate.ts` walks the document and turns what comes back into
+FFIR codes. That is the whole of `packages/ai` so far. Rule 8 reports
+`invalid_parameter_value` and carries the specific NODE_REGISTRY failure code in
+`details.failure`, so the repair prompt can print `param_pattern_failed` while
+the vocabulary in `codes.ts` keeps one code per rule.
+
+A value carrying an expression is exempt from every rule about its shape.
+`"#{{ $vars.channel }}"` is legal for a parameter whose pattern demands a
+leading `#`, and what it resolves to is unknowable until the workflow runs, so
+checking it would reject most real workflows. Detecting one needs no parser:
+grammar v1 has no escape for a literal `{{`, which makes its presence an exact
+test.
+
+Stage 2 also checks that every `credentials[].capability_scope` names a real
+integration, the second half of its row in the AI_SPEC stage table and something
+rule 10 cannot see, because rule 10 compares a scope against the capabilities
+that reference it and a credential no node uses is invisible to it. That is the
+one new error code, `unknown_capability_scope`.
+
+Neither stage reads a binding, and a test proves it by validating against a
+registry with every binding stripped and getting an identical result. Whether a
+target can express a capability is settled at registry load and again at the
+compile dry-run, which is stage 5 and belongs to `pipeline` because it is the
+only layer allowed to call both sides.
+
 ### M6. n8n compiler
 The 6-stage pipeline, `Target` interface, and the n8n target covering all nine
 node kinds. Deterministic emit.

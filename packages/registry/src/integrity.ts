@@ -30,6 +30,7 @@ import {
   type CapabilityFile,
   type RegistryIndex,
 } from "./types.js";
+import { sameParameterValue } from "./validate-params.js";
 
 export const IntegrityCode = {
   CAPABILITY_ID_MALFORMED: "capability_id_malformed",
@@ -252,7 +253,9 @@ function checkParameterRules(
           parameter.type === "enum" &&
           parameter.default !== undefined &&
           parameter.values !== undefined &&
-          !parameter.values.some((value) => sameValue(value, parameter.default))
+          !parameter.values.some((value) =>
+            sameParameterValue(value, parameter.default),
+          )
         ) {
           issues.push({
             code: IntegrityCode.ENUM_DEFAULT_NOT_IN_VALUES,
@@ -544,9 +547,4 @@ function compiles(pattern: string): boolean {
 
 function sameStrings(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((value, position) => value === b[position]);
-}
-
-/** Structural equality over JSON literals, which is what an enum's values are. */
-function sameValue(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
 }

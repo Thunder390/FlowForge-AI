@@ -32,6 +32,14 @@ export const ErrorCode = {
 
   // Stages 2 and 3, registry-dependent: rules 7, 8, 13.
   UNKNOWN_CAPABILITY: "unknown_capability",
+  /**
+   * A `credentials[].capability_scope` naming an integration the registry does
+   * not contain. Not a numbered rule: rule 10 checks a scope against the
+   * capabilities that reference it, which says nothing about a credential no
+   * node uses, and the merge step joins every scope against the registry's auth
+   * definitions to build the setup guide.
+   */
+  UNKNOWN_CAPABILITY_SCOPE: "unknown_capability_scope",
   INVALID_PARAMETER_VALUE: "invalid_parameter_value",
   /**
    * Rule 13. The independent parameter-name check. It exists because the AI
@@ -85,6 +93,7 @@ export const ERROR_CLASS: Record<ErrorCode, ErrorClass> = {
   [ErrorCode.NODE_UNREACHABLE]: "repairable",
   [ErrorCode.GRAPH_CYCLE]: "repairable",
   [ErrorCode.UNKNOWN_CAPABILITY]: "repairable",
+  [ErrorCode.UNKNOWN_CAPABILITY_SCOPE]: "repairable",
   [ErrorCode.INVALID_PARAMETER_VALUE]: "repairable",
   [ErrorCode.UNKNOWN_PARAMETER_NAME]: "repairable",
   [ErrorCode.CREDENTIAL_REF_MISSING]: "repairable",

@@ -39,6 +39,9 @@ export {
 export {
   isTerminal,
   classOf,
+  // Exported for the registry-dependent stages, which live outside this package
+  // and must not reinvent "a result is ok when the error list is empty".
+  invalid,
   type ValidationError,
   type ValidationResult,
 } from "./result.js";
