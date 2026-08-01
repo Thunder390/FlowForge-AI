@@ -1,9 +1,11 @@
 /**
  * The validation stages that live in `ffir`: 0, 1, and 4.
  *
- * Stages 2 and 3 are registry-dependent and therefore live in `ai`, which owns
- * the registry join. `ffir` must not depend on the registry, so no function
- * here can claim to have run the whole pipeline.
+ * Stages 2 and 3 are registry-dependent and therefore live in `registry`, which
+ * owns the join they walk. `ffir` must not depend on the registry, so no
+ * function here can claim to have run the whole pipeline. `ai` re-exports those
+ * two stages, because owning them is a fact about the architecture rather than
+ * about which package the code sits in.
  *
  * Validation does not trust its input's origin. Every document passes the same
  * pipeline whether it came from the model, a human, or the public marketplace,
@@ -21,6 +23,29 @@ import type { FFIRDocument } from "../types.js";
 export { checkLimits, type LimitCheckOptions } from "./limits.js";
 export { checkSchema, isFFIRDocument, ffirJsonSchema } from "./schema.js";
 export { checkGraph, GRAPH_RULES, RULE_OWNERSHIP } from "./graph.js";
+// The graph view, exported for the compiler.
+//
+// Stage 3 of the compile pipeline topologically sorts the same graph these
+// rules traverse, and it needs the same answers: which edges are well-formed,
+// which close a loop, and what a node's ports lead to. A second adjacency
+// builder in the compiler would be a second opinion about what the graph is,
+// and the two would disagree first on exactly the documents that are hardest to
+// reason about. `integrationOf` is deliberately not re-exported: `registry`
+// exports a different function under that name.
+export {
+  buildGraphModel,
+  portOf,
+  outboundOf,
+  inboundOf,
+  reachableFrom,
+  predecessorsOf,
+  loopBody,
+  DEFAULT_PORT,
+  ERROR_PORT,
+  EACH_PORT,
+  type GraphModel,
+  type EdgeEntry,
+} from "./graph-model.js";
 export {
   findSecret,
   isSecretFieldName,

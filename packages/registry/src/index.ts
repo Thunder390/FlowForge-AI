@@ -545,3 +545,11 @@ export {
   type ResolvedTargetCapability,
   type BindingStatus,
 } from "./resolve.js";
+// Validation stages 2 and 3. They live here because they are a walk over
+// registry data, and because `ai` and `compiler` both need them while neither
+// may import the other. `ai` re-exports all three.
+export {
+  checkRegistry,
+  checkParameters,
+  validateAgainstRegistry,
+} from "./validate-document.js";

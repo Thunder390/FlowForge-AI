@@ -109,9 +109,10 @@ ffir/
 │       └── v1_to_v2.ts       Added per major version
 ```
 
-Validation stages 2 and 3 live in `ai` rather than here, because they need the
-registry and `ffir` must not depend on it. Stages 0, 1, and 4 are pure structure
-and belong here.
+Validation stages 2 and 3 live in `registry` rather than here, because they need
+the registry and `ffir` must not depend on it. `ai` re-exports them, since
+owning those stages is a fact about the architecture rather than about which
+package the code sits in. Stages 0, 1, and 4 are pure structure and belong here.
 
 The expression parser is here, not in the compiler, so every consumer parses
 identically. Regex-rewriting expressions per target is how escaping bugs get
@@ -128,16 +129,24 @@ registry/
 │   ├── load.ts               Version-keyed artifact loading, LRU
 │   ├── resolve.ts            Capability ID -> entry
 │   ├── index.ts              Alias search for retrieval
-│   └── validate-params.ts    Names and values against an entry
+│   ├── validate-params.ts    Names and values against an entry
+│   └── validate-document.ts  Validation stages 2 and 3, over a document
 └── build/<version>/          Published artifacts, gitignored
     ├── capabilities/
     ├── bindings/<platform>/
     └── index.json
 ```
 
-`validate-params.ts` implements validation stage 3, covering parameter **names**
-as well as values. It lives here because the rules are registry data, and it is
-consumed by `ai`.
+`validate-params.ts` implements validation stage 3's rules, covering parameter
+**names** as well as values. `validate-document.ts` walks a document through
+stages 2 and 3 using them. Both live here because the rules are registry data
+and the walk needs nothing but FFIR types and a `Registry`.
+
+They are also the only stages two sibling packages both need: `ai` runs them
+before generating, and `compiler` runs them at stage 1 because it must not
+assume its caller validated. Neither may import the other, so a home under the
+package they both already depend on is the only one that serves both without
+duplicating rules 7, 8, and 13.
 
 ### `packages/compiler`
 
@@ -147,7 +156,11 @@ FFIR to platform artifacts. A pure function.
 compiler/
 ├── src/
 │   ├── compile.ts            The 6-stage pipeline
+│   ├── validate.ts           Stage 1, composed from ffir and registry
+│   ├── resolve.ts            Stage 2, bindings and degradation
 │   ├── normalize.ts          Stage 3, target-independent
+│   ├── capabilities.ts       The pre-lowering capability check
+│   ├── errors.ts             CompileError, CompileWarning, CompileResult
 │   ├── target.ts             Target and TargetCapabilities interfaces
 │   ├── transforms.ts         Named parameter transforms, closed set
 │   └── targets/
@@ -162,6 +175,10 @@ compiler/
     ├── input.ffir.json
     └── expected.n8n.json
 ```
+
+Stages 1 through 3 exist as of M6a. `transforms.ts` and everything under
+`targets/` are M6b: named transforms run during parameter mapping, which is
+stage 4, so they are target work rather than shared work.
 
 No network, no filesystem, no clock, no randomness. Node IDs are deterministic
 UUIDv5 rather than random, which is what makes golden-file testing work.
@@ -205,7 +222,7 @@ ai/
 │   │   ├── parameters.ts     Pass B, synthesizes the closed schema
 │   │   └── repair.ts
 │   ├── merge.ts              Pass output -> FFIR
-│   ├── validate.ts           Stages 2 and 3
+│   ├── validate.ts           Stages 2 and 3, re-exported from registry
 │   └── schema-synth.ts       Builds the pass B schema from registry data
 ├── prompts/
 │   ├── classifier/v1.md

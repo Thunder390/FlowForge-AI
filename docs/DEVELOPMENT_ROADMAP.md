@@ -70,7 +70,7 @@ the split `capabilities/` and `bindings/n8n/` artifacts join correctly by ID.
 Met on 2026-07-31. 204 tests. Six integrations: `core` and `http` for the two
 reserved namespaces, `slack`, `bamboohr`, and `google_workspace` for the worked
 example, and `openai` so that every node kind except `error_handler` has a
-capability behind it, which M6 needs for a golden case per kind. The artifacts
+capability behind it, which M6b needs for a golden case per kind. The artifacts
 live in `packages/registry/fixtures/<version>/`, a sibling of the gitignored
 `build/`, because M20 has to diff a generated build against them.
 
@@ -123,9 +123,47 @@ target can express a capability is settled at registry load and again at the
 compile dry-run, which is stage 5 and belongs to `pipeline` because it is the
 only layer allowed to call both sides.
 
-### M6. n8n compiler
-The 6-stage pipeline, `Target` interface, and the n8n target covering all nine
-node kinds. Deterministic emit.
+### M6a. Compiler core (done)
+Stages 1 through 3 of the pipeline, which every target shares, plus the `Target`
+interface stages 4 through 6 implement and the error model. No target.
+
+**Done when:** `pnpm test` passes with the worked example normalizing to a graph
+whose node order, display names, and applied defaults are pinned by assertion;
+normalizing twice producing byte-identical output; a `null` binding and an
+absent binding key each degrading to `http.request.send` under their own warning
+code; and the capability pre-check rejecting a branching document against a
+`linear_only` target by node id.
+
+Met on 2026-08-01. 142 tests in `packages/compiler`, 741 across the workspace.
+
+Split out of M6 because the target-independent half is two thirds of the
+compiler and is worth proving on its own. Written with no target to lean on, its
+independence is a property of the code rather than an intention: the only thing
+implementing `Target` is a test double whose capabilities are settable per test,
+which is also what let the pre-lowering check be driven through combinations no
+real platform has yet.
+
+Stage 1 forced a decision. The compiler is a public library boundary and must
+not assume its caller validated, so it runs the full gate, but validation stages
+2 and 3 lived in `ai` and `compiler` may not import it. They moved to
+`registry`, which is where the rules they walk already lived and which both
+packages already depend on; `ai` re-exports all three, so its surface is
+unchanged. Duplicating the walk would have put rules 7, 8, and 13 behind two
+implementations that drift.
+
+Three ordering decisions are pinned by tests because determinism rests on them.
+Parameter keys are emitted in the registry's declaration order rather than the
+document's, so two documents differing only in JSON key order normalize
+identically. Topological ties break on node id. Display names are assigned in
+document order rather than topological order, so that rewiring an edge cannot
+rename an unrelated node and break every expression referencing it by name.
+
+`transforms.ts` is deliberately absent. Named transforms run during parameter
+mapping, which COMPILER_ARCHITECTURE places in stage 4, so they belong to M6b
+along with `parameter_map`.
+
+### M6b. n8n target
+Stages 4 through 6 for n8n, covering all nine node kinds. Deterministic emit.
 
 **Done when:** the BambooHR onboarding example from WORKFLOW_SCHEMA compiles to
 n8n JSON matching a golden file, compiling twice produces byte-identical output,
@@ -306,7 +344,7 @@ No milestone depends on a package built later.
 | --- | --- |
 | M1 to M3 | nothing |
 | M4, M5 | ffir |
-| M6, M7 | ffir, registry |
+| M6a, M6b, M7 | ffir, registry |
 | M8, M9 | ffir, registry, compiler, renderers |
 | M10 to M13 | db, pipeline |
 | M14 to M19 | the full engine plus the service |

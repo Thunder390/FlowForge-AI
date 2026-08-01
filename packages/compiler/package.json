@@ -1,0 +1,27 @@
+{
+  "name": "@flowforge/compiler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "FFIR to platform artifacts. A pure function: no network, no filesystem, no clock, no randomness. Must not import the AI layer.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flowforge/ffir": "workspace:*",
+    "@flowforge/registry": "workspace:*"
+  },
+  "devDependencies": {
+    "@flowforge/config": "workspace:*",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.9.2",
+    "vitest": "^2.1.8"
+  }
+}
