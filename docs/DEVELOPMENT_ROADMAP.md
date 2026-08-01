@@ -212,12 +212,45 @@ raise a warning. `core.loop.for_each`'s `items` is the case that costs
 something, since Split In Batches iterates whatever arrives on its input rather
 than a collection the step names.
 
-### M7. Renderers
+### M7. Renderers (done)
 Mermaid, setup guide, integrations list, React Flow layout data.
 
 **Done when:** the worked example produces a mermaid diagram that renders, a
 setup guide listing all three credentials with their scopes, and layout positions
 on the grid.
+
+Met on 2026-08-01. 112 tests in `packages/renderers`, 1016 across the workspace.
+
+"Renders" is checked structurally rather than by parsing: every edge endpoint is
+a declared node, every label is a balanced quoted string, and no `linkStyle`
+indexes a link that does not exist. Those are the three faults that break a
+mermaid diagram outright, and proving them needs no dependency in a package
+whose job is to have none. The label cases are the ones that bite, so a node
+labelled `A --> B{x} "q" #h` is a fixture.
+
+The setup guide asks for exactly the scopes the workflow uses rather than
+everything the integration offers. The registry declares five Slack scopes and
+the worked example gets `chat:write` alone, which is a real security difference:
+a guide that cannot say what is needed pushes users toward granting everything.
+
+**`react-flow` does not compute a layout, it reads one.** That looks like a
+missing feature and is the opposite. Positions must be the same positions the
+exported n8n file uses, or a user who arranges a workflow here and finds a
+different shape after importing stops trusting both views. There is one producer,
+the n8n target's layered layout, publishing through `metadata.layout`. A node
+with no recorded position is reported in `missingPositions` rather than invented,
+so an uncompiled document says so instead of stacking every node at the origin.
+
+Reading order is duplicated rather than shared. `renderers` may not import
+`compiler`, and the rule is the same one stage 3 uses, but a divergence would
+only reorder a numbered list in a Markdown document, where the compiler's sort
+decides canvas positions and connection indices. Sharing it would mean either a
+forbidden dependency or a fifth package holding twenty lines. Both walks read the
+graph through `ffir`'s model, so "what is the graph" still has one answer.
+
+Six of the nine mermaid shapes are chosen here; COMPILER_ARCHITECTURE names only
+trigger, branch, and action. The port colours are provisional: they belong in
+`packages/ui`, which M14 creates.
 
 ### M8. AI layer against fixtures
 `ModelProvider` interface, Anthropic implementation, replay provider, both
@@ -406,7 +439,7 @@ regression, and a milestone is a session's work.
 | `v0.1.0` | architecture freeze | Architecture Frozen |
 | `v0.2.0` | M5 | Validation Engine Complete |
 | `v0.3.0` | M6a | Compiler Core |
-| `v0.4.0` | M7 | Compiler Complete |
+| `v0.4.0` | M7 | Engine Artifacts Complete |
 | `v0.5.0` | M8 | AI Generation Working |
 | `v1.0.0` | M19 | Public MVP |
 
@@ -415,6 +448,12 @@ which decisions are load-bearing, and what is known to be weak. Tags are never
 moved once pushed, so the table shifts down rather than reassigning a number
 that has shipped: `v0.3.0` became Compiler Core when M6 split, and everything
 below it moved by one.
+
+`v0.4.0` was called Compiler Complete while it was still unshipped, which stopped
+being accurate the moment M6b landed: the compiler finished there, and M7 adds
+the renderers. Renaming an unshipped checkpoint is free, and the point it marks
+is a real one, which is that all four user-facing artifacts now exist and every
+one of them is a pure function of a single FFIR document.
 
 ## Related Documents
 

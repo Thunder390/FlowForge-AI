@@ -199,11 +199,20 @@ platform's semantics, a renderer must be readable.
 
 ```
 renderers/
-├── mermaid.ts
-├── setup-guide.ts            Needs registry for auth setup notes
-├── integrations.ts
-└── react-flow.ts             Uses metadata.layout
+└── src/
+    ├── mermaid.ts
+    ├── setup-guide.ts        Needs registry for auth setup notes
+    ├── integrations.ts
+    ├── react-flow.ts         Uses metadata.layout
+    └── order.ts              Reading order, shared by mermaid and the guide
 ```
+
+Depends on `ffir` and `registry`, and on neither `compiler` nor `ai`. A test
+reads the manifest and every source file to keep that true. The temptation it
+guards against is concrete: `react-flow` needs canvas positions and the compiler
+has a layout algorithm, so importing it would be one line. Instead the positions
+travel through `metadata.layout`, which keeps one producer for a value the
+canvas and the exported file must agree on.
 
 ### `packages/ai`
 
