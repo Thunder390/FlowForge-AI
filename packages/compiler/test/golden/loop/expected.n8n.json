@@ -1,0 +1,126 @@
+{
+  "name": "Greet every new hire in the batch",
+  "nodes": [
+    {
+      "id": "c4f48d55-6b38-5af3-b05d-642a86425d90",
+      "name": "New employee in BambooHR",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bamboohr-employee-created",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "7bf5890c-79f3-5f68-9f89-495344b89af3",
+      "name": "For each new hire",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "batchSize": 5
+      }
+    },
+    {
+      "id": "2a2813a9-166a-5268-9f2e-39672271a9f1",
+      "name": "Report the batch is finished",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#hr",
+        "text": "Every new hire has been greeted."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    },
+    {
+      "id": "ae7305b9-535b-5430-a436-73531201bae9",
+      "name": "Greet one hire",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#general",
+        "text": "=Welcome {{ $('New employee in BambooHR').item.json.employee.first_name }}."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New employee in BambooHR": {
+      "main": [
+        [
+          {
+            "node": "For each new hire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "For each new hire": {
+      "main": [
+        [
+          {
+            "node": "Report the batch is finished",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Greet one hire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Greet one hire": {
+      "main": [
+        [
+          {
+            "node": "For each new hire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "flowforge"
+  }
+}

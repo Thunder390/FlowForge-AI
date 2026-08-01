@@ -1,0 +1,77 @@
+{
+  "ffir_version": "1.0",
+  "expression_grammar": "1",
+  "id": "wf_branch_if",
+  "name": "Route new hires by department",
+  "description": "Announce a new hire in the engineering channel if they are an engineer, and in the general channel otherwise.",
+  "nodes": [
+    {
+      "id": "n_trigger",
+      "kind": "trigger",
+      "capability": "bamboohr.employee.created",
+      "label": "New employee in BambooHR",
+      "parameters": {},
+      "credential": "cred_bamboohr"
+    },
+    {
+      "id": "n_is_engineering",
+      "kind": "branch",
+      "capability": "core.branch.if",
+      "label": "Is this an engineer?",
+      "parameters": { "case_sensitive": false }
+    },
+    {
+      "id": "n_tell_engineering",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Welcome them in engineering",
+      "parameters": {
+        "channel": "#engineering",
+        "text": "{{ n_trigger.employee.first_name }} joins the engineering team today."
+      },
+      "credential": "cred_slack"
+    },
+    {
+      "id": "n_tell_everyone",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Welcome them in general",
+      "parameters": {
+        "channel": "#general",
+        "text": "{{ n_trigger.employee.first_name }} joins {{ n_trigger.employee.department }} today."
+      },
+      "credential": "cred_slack"
+    }
+  ],
+  "edges": [
+    { "id": "e_1", "from": "n_trigger", "to": "n_is_engineering" },
+    {
+      "id": "e_2",
+      "from": "n_is_engineering",
+      "to": "n_tell_engineering",
+      "port": "true",
+      "condition": {
+        "left": "{{ n_trigger.employee.department }}",
+        "operator": "equals",
+        "right": "Engineering"
+      }
+    },
+    { "id": "e_3", "from": "n_is_engineering", "to": "n_tell_everyone", "port": "false" }
+  ],
+  "credentials": [
+    {
+      "id": "cred_bamboohr",
+      "capability_scope": "bamboohr",
+      "auth_type": "api_key",
+      "label": "BambooHR API key"
+    },
+    {
+      "id": "cred_slack",
+      "capability_scope": "slack",
+      "auth_type": "oauth2",
+      "label": "Slack workspace",
+      "required_scopes": ["chat:write"]
+    }
+  ],
+  "metadata": { "registry_version": "n8n@1.62.0+overlay.3" }
+}

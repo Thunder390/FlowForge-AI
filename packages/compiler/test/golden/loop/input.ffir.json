@@ -1,0 +1,69 @@
+{
+  "ffir_version": "1.0",
+  "expression_grammar": "1",
+  "id": "wf_loop",
+  "name": "Greet every new hire in the batch",
+  "description": "The loop's each port feeds a body that wires back into it, and the done port continues once iteration finishes.",
+  "nodes": [
+    {
+      "id": "n_trigger",
+      "kind": "trigger",
+      "capability": "bamboohr.employee.created",
+      "label": "New employee in BambooHR",
+      "parameters": {},
+      "credential": "cred_bamboohr"
+    },
+    {
+      "id": "n_loop",
+      "kind": "loop",
+      "capability": "core.loop.for_each",
+      "label": "For each new hire",
+      "parameters": {
+        "items": "{{ n_trigger.employee.id }}",
+        "max_iterations": 50,
+        "batch_size": 5
+      }
+    },
+    {
+      "id": "n_greet",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Greet one hire",
+      "parameters": {
+        "channel": "#general",
+        "text": "Welcome {{ n_trigger.employee.first_name }}."
+      },
+      "credential": "cred_slack"
+    },
+    {
+      "id": "n_done",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Report the batch is finished",
+      "parameters": { "channel": "#hr", "text": "Every new hire has been greeted." },
+      "credential": "cred_slack"
+    }
+  ],
+  "edges": [
+    { "id": "e_1", "from": "n_trigger", "to": "n_loop" },
+    { "id": "e_2", "from": "n_loop", "to": "n_greet", "port": "each" },
+    { "id": "e_3", "from": "n_greet", "to": "n_loop" },
+    { "id": "e_4", "from": "n_loop", "to": "n_done", "port": "done" }
+  ],
+  "credentials": [
+    {
+      "id": "cred_bamboohr",
+      "capability_scope": "bamboohr",
+      "auth_type": "api_key",
+      "label": "BambooHR API key"
+    },
+    {
+      "id": "cred_slack",
+      "capability_scope": "slack",
+      "auth_type": "oauth2",
+      "label": "Slack workspace",
+      "required_scopes": ["chat:write"]
+    }
+  ],
+  "metadata": { "registry_version": "n8n@1.62.0+overlay.3" }
+}

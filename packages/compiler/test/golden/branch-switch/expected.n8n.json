@@ -1,0 +1,222 @@
+{
+  "name": "Route new hires to their team channel",
+  "nodes": [
+    {
+      "id": "8e8260b1-cf9c-51aa-9cc8-113b0397258b",
+      "name": "New employee in BambooHR",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bamboohr-employee-created",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "83870723-8a86-5927-a555-060c21b2a363",
+      "name": "Which team?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "options": {
+          "caseSensitive": true
+        },
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c4f3a504-ac69-52cb-a079-aa1f92008040",
+                    "leftValue": "={{ $json.employee.department }}",
+                    "rightValue": "Engineering",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "engineering"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "3fbd09eb-eac7-5e1e-b22a-c31aefe86946",
+                    "leftValue": "={{ $json.employee.department }}",
+                    "rightValue": "Sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "sales"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a162dd15-f7a9-5876-a61b-27b95144111f",
+                    "leftValue": "={{ $json.employee.department }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "isNotEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "everyone_else"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3f178d53-5b57-5d58-9451-8d5979cf6be7",
+      "name": "Post to general",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#general",
+        "text": "={{ $('New employee in BambooHR').item.json.employee.first_name }} is joining {{ $('New employee in BambooHR').item.json.employee.department }}."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    },
+    {
+      "id": "f83eb3a1-0bab-54a5-9c99-faf589b63733",
+      "name": "Post to engineering",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#engineering",
+        "text": "={{ $('New employee in BambooHR').item.json.employee.first_name }} is joining engineering."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    },
+    {
+      "id": "6164df0e-e9dd-5202-bcf0-b32d6c4fc28d",
+      "name": "Post to sales",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        320
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#sales",
+        "text": "={{ $('New employee in BambooHR').item.json.employee.first_name }} is joining sales."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New employee in BambooHR": {
+      "main": [
+        [
+          {
+            "node": "Which team?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Which team?": {
+      "main": [
+        [
+          {
+            "node": "Post to engineering",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post to sales",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post to general",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "flowforge"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "ffir_version": "1.0",
+  "expression_grammar": "1",
+  "id": "wf_http_request",
+  "name": "Tell the internal directory about a new hire",
+  "description": "The universal escape hatch, and the case that exercises three of the five named transforms.",
+  "nodes": [
+    {
+      "id": "n_trigger",
+      "kind": "trigger",
+      "capability": "bamboohr.employee.created",
+      "label": "New employee in BambooHR",
+      "parameters": {},
+      "credential": "cred_bamboohr"
+    },
+    {
+      "id": "n_notify",
+      "kind": "action",
+      "capability": "http.request.send",
+      "label": "Push to the directory",
+      "parameters": {
+        "method": "POST",
+        "url": "https://directory.{{ $vars.company_domain }}/api/people",
+        "headers": {
+          "X-Request-Source": "flowforge",
+          "X-Employee-Id": "{{ n_trigger.employee.id }}"
+        },
+        "query": { "notify": "true" },
+        "body": {
+          "first_name": "{{ n_trigger.employee.first_name }}",
+          "department": "{{ n_trigger.employee.department }}",
+          "active": true
+        },
+        "timeout_ms": 15000
+      }
+    }
+  ],
+  "edges": [{ "id": "e_1", "from": "n_trigger", "to": "n_notify" }],
+  "credentials": [
+    {
+      "id": "cred_bamboohr",
+      "capability_scope": "bamboohr",
+      "auth_type": "api_key",
+      "label": "BambooHR API key"
+    }
+  ],
+  "variables": [
+    {
+      "id": "company_domain",
+      "label": "Company email domain",
+      "type": "string",
+      "default": "example.com",
+      "required": true,
+      "sensitive": false,
+      "description": "Domain the internal directory lives on."
+    }
+  ],
+  "metadata": { "registry_version": "n8n@1.62.0+overlay.3" }
+}

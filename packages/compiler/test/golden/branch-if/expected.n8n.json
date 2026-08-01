@@ -1,0 +1,137 @@
+{
+  "name": "Route new hires by department",
+  "nodes": [
+    {
+      "id": "8ff22053-ee68-5e61-8bf0-fc9ef284f25b",
+      "name": "New employee in BambooHR",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bamboohr-employee-created",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "7c5501f1-5d1f-54b2-8c10-f3e4b65ca4c5",
+      "name": "Is this an engineer?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "options": {
+          "caseSensitive": false
+        },
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d716f478-b716-5abb-856b-10d8d85298e8",
+              "leftValue": "={{ $json.employee.department }}",
+              "rightValue": "Engineering",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "daa62eec-bec6-5ef2-b9cb-d2858275dab4",
+      "name": "Welcome them in engineering",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#engineering",
+        "text": "={{ $('New employee in BambooHR').item.json.employee.first_name }} joins the engineering team today."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    },
+    {
+      "id": "6b04bc51-9118-5eae-bdb2-07be55db937d",
+      "name": "Welcome them in general",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#general",
+        "text": "={{ $('New employee in BambooHR').item.json.employee.first_name }} joins {{ $('New employee in BambooHR').item.json.employee.department }} today."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New employee in BambooHR": {
+      "main": [
+        [
+          {
+            "node": "Is this an engineer?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is this an engineer?": {
+      "main": [
+        [
+          {
+            "node": "Welcome them in engineering",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Welcome them in general",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "flowforge"
+  }
+}

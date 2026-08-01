@@ -84,3 +84,23 @@ export {
 } from "./target.js";
 
 export { validateForCompile } from "./validate.js";
+
+export {
+  TRANSFORMS,
+  applyTransform,
+  isKnownTransform,
+  type TransformContext,
+  type TransformFn,
+} from "./transforms.js";
+
+export { FLOWFORGE_NAMESPACE, nodeUuid, partUuid, uuidv5 } from "./uuid.js";
+
+export {
+  n8nTarget,
+  N8N_CAPABILITIES,
+  N8N_TARGET_KEY,
+  isN8nIR,
+  type N8nIR,
+  type N8nNode,
+  type N8nWorkflow,
+} from "./targets/n8n/index.js";

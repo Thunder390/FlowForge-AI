@@ -1,0 +1,80 @@
+{
+  "name": "Tell the internal directory about a new hire",
+  "nodes": [
+    {
+      "id": "b2241e12-6aaf-569f-b1e4-38dd41e0b8d1",
+      "name": "New employee in BambooHR",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bamboohr-employee-created",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "494e6652-75e6-5dce-8b3e-c2bfcd43c7e9",
+      "name": "Push to the directory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "sendBody": true,
+        "specifyBody": "json",
+        "method": "POST",
+        "url": "=https://directory.{{ $vars.company_domain }}/api/people",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Request-Source",
+              "value": "flowforge"
+            },
+            {
+              "name": "X-Employee-Id",
+              "value": "={{ $json.employee.id }}"
+            }
+          ]
+        },
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "notify",
+              "value": "true"
+            }
+          ]
+        },
+        "jsonBody": "={\"first_name\":\"{{ $json.employee.first_name }}\",\"department\":\"{{ $json.employee.department }}\",\"active\":true}",
+        "options": {
+          "timeout": 15000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New employee in BambooHR": {
+      "main": [
+        [
+          {
+            "node": "Push to the directory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "flowforge"
+  }
+}

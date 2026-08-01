@@ -1,0 +1,96 @@
+{
+  "ffir_version": "1.0",
+  "expression_grammar": "1",
+  "id": "wf_merge",
+  "name": "Collect both setup steps before announcing",
+  "description": "Two independent steps run in parallel and a merge waits for both, which is the one node kind with several numbered inputs.",
+  "nodes": [
+    {
+      "id": "n_trigger",
+      "kind": "trigger",
+      "capability": "bamboohr.employee.created",
+      "label": "New employee in BambooHR",
+      "parameters": {},
+      "credential": "cred_bamboohr"
+    },
+    {
+      "id": "n_channel",
+      "kind": "action",
+      "capability": "slack.channel.create",
+      "label": "Create their onboarding channel",
+      "parameters": { "name": "onboarding-{{ n_trigger.employee.id }}" },
+      "credential": "cred_slack"
+    },
+    {
+      "id": "n_account",
+      "kind": "action",
+      "capability": "google_workspace.user.create",
+      "label": "Create Google Workspace account",
+      "parameters": {
+        "primary_email": "{{ n_trigger.employee.work_email }}",
+        "given_name": "{{ n_trigger.employee.first_name }}",
+        "family_name": "{{ n_trigger.employee.last_name }}",
+        "password": "{{ $vars.temp_password }}"
+      },
+      "credential": "cred_google_workspace"
+    },
+    {
+      "id": "n_collect",
+      "kind": "merge",
+      "capability": "core.merge.collect",
+      "label": "Wait for both",
+      "parameters": { "mode": "choose_branch", "combine_by_fields": ["id", "email"] }
+    },
+    {
+      "id": "n_announce",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Announce the new hire",
+      "parameters": {
+        "channel": "#general",
+        "text": "{{ n_trigger.employee.first_name }} is fully set up."
+      },
+      "credential": "cred_slack"
+    }
+  ],
+  "edges": [
+    { "id": "e_1", "from": "n_trigger", "to": "n_channel" },
+    { "id": "e_2", "from": "n_trigger", "to": "n_account" },
+    { "id": "e_3", "from": "n_channel", "to": "n_collect" },
+    { "id": "e_4", "from": "n_account", "to": "n_collect" },
+    { "id": "e_5", "from": "n_collect", "to": "n_announce" }
+  ],
+  "credentials": [
+    {
+      "id": "cred_bamboohr",
+      "capability_scope": "bamboohr",
+      "auth_type": "api_key",
+      "label": "BambooHR API key"
+    },
+    {
+      "id": "cred_google_workspace",
+      "capability_scope": "google_workspace",
+      "auth_type": "oauth2",
+      "label": "Google Workspace admin",
+      "required_scopes": ["https://www.googleapis.com/auth/admin.directory.user"]
+    },
+    {
+      "id": "cred_slack",
+      "capability_scope": "slack",
+      "auth_type": "oauth2",
+      "label": "Slack workspace",
+      "required_scopes": ["chat:write", "channels:manage"]
+    }
+  ],
+  "variables": [
+    {
+      "id": "temp_password",
+      "label": "Temporary password",
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "description": "Initial password. Users must change it at first login."
+    }
+  ],
+  "metadata": { "registry_version": "n8n@1.62.0+overlay.3" }
+}

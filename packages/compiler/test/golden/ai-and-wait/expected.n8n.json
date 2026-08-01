@@ -1,0 +1,126 @@
+{
+  "name": "Draft a welcome note, then send it later",
+  "nodes": [
+    {
+      "id": "fae9d121-5bb8-570a-84cc-6c007d0554e4",
+      "name": "New employee in BambooHR",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bamboohr-employee-created",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "8f0784bc-ee24-5da9-9e8c-5038ffdf78e1",
+      "name": "Draft the welcome message",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "model": "gpt-4o-mini",
+        "prompt": "=Write a two-sentence welcome for {{ $json.employee.first_name }}, who is joining {{ $json.employee.department }} as a {{ $json.employee.job_title }}.",
+        "options": {
+          "systemMessage": "You write short, warm internal announcements.",
+          "temperature": 0.7,
+          "maxTokens": 200
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_ME",
+          "name": "OpenAI API key"
+        }
+      }
+    },
+    {
+      "id": "06df70d1-749f-5317-ab2d-27824d7c1591",
+      "name": "Hold until the morning",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "unit": "seconds",
+        "amount": 3600
+      }
+    },
+    {
+      "id": "81e6ca51-0e82-5c9d-bbc7-988029cb7b7c",
+      "name": "Post the welcome",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#general",
+        "text": "={{ $('Draft the welcome message').item.json.text }}"
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New employee in BambooHR": {
+      "main": [
+        [
+          {
+            "node": "Draft the welcome message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft the welcome message": {
+      "main": [
+        [
+          {
+            "node": "Hold until the morning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hold until the morning": {
+      "main": [
+        [
+          {
+            "node": "Post the welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "flowforge"
+  }
+}

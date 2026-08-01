@@ -42,6 +42,48 @@ function sourceFile(name: string): string {
   return fileURLToPath(new URL(name, import.meta.url));
 }
 
+/**
+ * Source with comments removed.
+ *
+ * These guards are about what the code does, not what it says. `uuid.ts`
+ * explains at length why it does not call `randomUUID`, and a check that failed
+ * on that sentence would get its pattern weakened until it stopped catching the
+ * real thing. The `[^:]` guard keeps `https://` inside a string from being read
+ * as the start of a comment.
+ */
+function code(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
+/**
+ * Every source file in the package, listed rather than globbed.
+ *
+ * A glob would silently start covering a new file, which sounds like a feature
+ * until someone adds one that legitimately needs a clock and the guard quietly
+ * fails for a reason nobody expects. A list makes adding a file a decision.
+ */
+const SOURCE_FILES = [
+  "compile.ts",
+  "normalize.ts",
+  "resolve.ts",
+  "validate.ts",
+  "capabilities.ts",
+  "errors.ts",
+  "target.ts",
+  "transforms.ts",
+  "uuid.ts",
+  "index.ts",
+  "targets/n8n/index.ts",
+  "targets/n8n/ir.ts",
+  "targets/n8n/lower.ts",
+  "targets/n8n/emit.ts",
+  "targets/n8n/verify.ts",
+  "targets/n8n/expression.ts",
+  "targets/n8n/conditions.ts",
+  "targets/n8n/layout.ts",
+  "targets/n8n/parameters.ts",
+];
+
 describe("a successful compile", () => {
   const result = compile(onboardingExample, registry, target);
 
@@ -255,6 +297,9 @@ describe("purity", () => {
     // what make a compiler's otherwise silent bugs visible. A source-level ban
     // is crude, and it is also the check that fails on the pull request rather
     // than six months later on a flaky diff.
+    // `node:crypto` is deliberately not on this list. `createHash` is a pure
+    // function of its input, which is the property that matters here, and it is
+    // what makes node ids deterministic instead of random.
     const banned = [
       /\bDate\s*\./,
       /\bnew\s+Date\b/,
@@ -265,17 +310,8 @@ describe("purity", () => {
       /from\s+"node:fs/,
     ];
 
-    for (const name of [
-      "compile.ts",
-      "normalize.ts",
-      "resolve.ts",
-      "validate.ts",
-      "capabilities.ts",
-      "errors.ts",
-      "target.ts",
-      "index.ts",
-    ]) {
-      const source = await readFile(sourceFile(name), "utf8");
+    for (const name of SOURCE_FILES) {
+      const source = code(await readFile(sourceFile(name), "utf8"));
       for (const pattern of banned) {
         expect(pattern.test(source), `${name} matches ${pattern}`).toBe(false);
       }
@@ -302,18 +338,19 @@ describe("the dependency rule", () => {
     // that failed on its own documentation would be deleted rather than fixed.
     const importsAi = /(?:from|import|require)\s*\(?\s*["']@flowforge\/ai["']/;
 
-    for (const name of [
-      "compile.ts",
-      "normalize.ts",
-      "resolve.ts",
-      "validate.ts",
-      "capabilities.ts",
-      "errors.ts",
-      "target.ts",
-      "index.ts",
-    ]) {
-      const source = await readFile(sourceFile(name), "utf8");
+    for (const name of SOURCE_FILES) {
+      const source = code(await readFile(sourceFile(name), "utf8"));
       expect(importsAi.test(source), name).toBe(false);
+    }
+  });
+
+  it("keeps n8n's vocabulary inside the n8n target", async () => {
+    // The design goal the whole architecture is subordinate to. If a platform's
+    // node types leak into the shared stages, "adding Make.com touches one
+    // directory" stops being true, and it stops being true quietly.
+    for (const name of SOURCE_FILES.filter((file) => !file.startsWith("targets/"))) {
+      const source = code(await readFile(sourceFile(name), "utf8"));
+      expect(source.includes("n8n-nodes-base"), name).toBe(false);
     }
   });
 });

@@ -1,0 +1,164 @@
+{
+  "name": "Collect both setup steps before announcing",
+  "nodes": [
+    {
+      "id": "ef8820fe-5f20-5056-8b5f-285b9c1bfb85",
+      "name": "New employee in BambooHR",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bamboohr-employee-created",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "f352e831-aefb-5751-99aa-4279ea68ddee",
+      "name": "Create Google Workspace account",
+      "type": "n8n-nodes-base.gSuiteAdmin",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "user",
+        "operation": "create",
+        "primaryEmail": "={{ $json.employee.work_email }}",
+        "firstName": "={{ $json.employee.first_name }}",
+        "lastName": "={{ $json.employee.last_name }}",
+        "password": "={{ $vars.temp_password }}",
+        "additionalFields": {
+          "changePasswordAtNextLogin": true,
+          "orgUnitPath": "/"
+        }
+      },
+      "credentials": {
+        "gSuiteAdminOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Google Workspace admin"
+        }
+      }
+    },
+    {
+      "id": "8b45d377-bcaa-5934-ad21-9f55d4c432ed",
+      "name": "Create their onboarding channel",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        160
+      ],
+      "parameters": {
+        "resource": "channel",
+        "operation": "create",
+        "channelId": "=onboarding-{{ $json.employee.id }}"
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    },
+    {
+      "id": "6cf5af63-c5f6-5df0-bbcc-b7b5b3327655",
+      "name": "Wait for both",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "chooseBranch",
+        "fieldsToMatchString": "id,email",
+        "numberInputs": 2
+      }
+    },
+    {
+      "id": "e5584e94-09bf-5c8d-90ea-27a2e980fe00",
+      "name": "Announce the new hire",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#general",
+        "text": "={{ $('New employee in BambooHR').item.json.employee.first_name }} is fully set up."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New employee in BambooHR": {
+      "main": [
+        [
+          {
+            "node": "Create their onboarding channel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Google Workspace account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Workspace account": {
+      "main": [
+        [
+          {
+            "node": "Wait for both",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create their onboarding channel": {
+      "main": [
+        [
+          {
+            "node": "Wait for both",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Wait for both": {
+      "main": [
+        [
+          {
+            "node": "Announce the new hire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "flowforge"
+  }
+}

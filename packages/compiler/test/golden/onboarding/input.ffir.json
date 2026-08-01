@@ -1,0 +1,122 @@
+{
+  "ffir_version": "1.0",
+  "expression_grammar": "1",
+  "id": "wf_01HQ8XONBOARD",
+  "name": "Employee onboarding",
+  "description": "When BambooHR records a new hire, create their Google Workspace account and announce them in Slack.",
+  "nodes": [
+    {
+      "id": "n_trigger",
+      "kind": "trigger",
+      "capability": "bamboohr.employee.created",
+      "label": "New employee in BambooHR",
+      "parameters": { "poll_interval_minutes": 15 },
+      "credential": "cred_bamboohr"
+    },
+    {
+      "id": "n_build_email",
+      "kind": "transform",
+      "capability": "core.transform.map",
+      "label": "Build the email address",
+      "parameters": {
+        "assignments": [
+          {
+            "field": "email",
+            "value": "{{ n_trigger.employee.first_name }}.{{ n_trigger.employee.last_name }}@{{ $vars.company_domain }}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "n_create_account",
+      "kind": "action",
+      "capability": "google_workspace.user.create",
+      "label": "Create Google Workspace account",
+      "parameters": {
+        "primary_email": "{{ n_build_email.email }}",
+        "given_name": "{{ n_trigger.employee.first_name }}",
+        "family_name": "{{ n_trigger.employee.last_name }}",
+        "password": "{{ $vars.temp_password }}",
+        "change_password_at_next_login": true
+      },
+      "credential": "cred_google_workspace",
+      "error_policy": {
+        "on_error": "route",
+        "retry": { "attempts": 2, "backoff": "exponential", "initial_delay_ms": 2000 }
+      }
+    },
+    {
+      "id": "n_slack_welcome",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Announce in Slack",
+      "parameters": {
+        "channel": "#general",
+        "text": "Welcome {{ n_trigger.employee.first_name }} to the team. Their account is {{ n_build_email.email }}."
+      },
+      "credential": "cred_slack"
+    },
+    {
+      "id": "n_alert_it",
+      "kind": "error_handler",
+      "capability": "slack.message.send",
+      "label": "Alert IT on failure",
+      "parameters": {
+        "channel": "#it-alerts",
+        "text": "Account creation failed for {{ n_trigger.employee.first_name }}. Needs manual setup."
+      },
+      "credential": "cred_slack"
+    }
+  ],
+  "edges": [
+    { "id": "e_1", "from": "n_trigger", "to": "n_build_email" },
+    { "id": "e_2", "from": "n_build_email", "to": "n_create_account" },
+    { "id": "e_3", "from": "n_create_account", "to": "n_slack_welcome" },
+    { "id": "e_4", "from": "n_create_account", "to": "n_alert_it", "port": "error" }
+  ],
+  "credentials": [
+    {
+      "id": "cred_bamboohr",
+      "capability_scope": "bamboohr",
+      "auth_type": "api_key",
+      "label": "BambooHR API key"
+    },
+    {
+      "id": "cred_google_workspace",
+      "capability_scope": "google_workspace",
+      "auth_type": "oauth2",
+      "label": "Google Workspace admin",
+      "required_scopes": ["https://www.googleapis.com/auth/admin.directory.user"]
+    },
+    {
+      "id": "cred_slack",
+      "capability_scope": "slack",
+      "auth_type": "oauth2",
+      "label": "Slack workspace",
+      "required_scopes": ["chat:write"]
+    }
+  ],
+  "variables": [
+    {
+      "id": "company_domain",
+      "label": "Company email domain",
+      "type": "string",
+      "default": "example.com",
+      "required": true,
+      "sensitive": false,
+      "description": "Domain for new employee email addresses."
+    },
+    {
+      "id": "temp_password",
+      "label": "Temporary password",
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "description": "Initial password. Users must change it at first login."
+    }
+  ],
+  "metadata": {
+    "generated_by": "claude-opus-5",
+    "registry_version": "n8n@1.62.0+overlay.3"
+  }
+}

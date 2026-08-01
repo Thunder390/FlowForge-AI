@@ -1,0 +1,73 @@
+{
+  "ffir_version": "1.0",
+  "expression_grammar": "1",
+  "id": "wf_ai_and_wait",
+  "name": "Draft a welcome note, then send it later",
+  "description": "An ai node writes the message and a wait node holds it until the new hire's first morning.",
+  "nodes": [
+    {
+      "id": "n_trigger",
+      "kind": "trigger",
+      "capability": "bamboohr.employee.created",
+      "label": "New employee in BambooHR",
+      "parameters": { "poll_interval_minutes": 30 },
+      "credential": "cred_bamboohr"
+    },
+    {
+      "id": "n_draft",
+      "kind": "ai",
+      "capability": "openai.chat.complete",
+      "label": "Draft the welcome message",
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "prompt": "Write a two-sentence welcome for {{ n_trigger.employee.first_name }}, who is joining {{ n_trigger.employee.department }} as a {{ n_trigger.employee.job_title }}.",
+        "system_prompt": "You write short, warm internal announcements.",
+        "temperature": 0.7,
+        "max_tokens": 200
+      },
+      "credential": "cred_openai"
+    },
+    {
+      "id": "n_hold",
+      "kind": "wait",
+      "capability": "core.wait.delay",
+      "label": "Hold until the morning",
+      "parameters": { "duration_seconds": 3600 }
+    },
+    {
+      "id": "n_send",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Post the welcome",
+      "parameters": { "channel": "#general", "text": "{{ n_draft.text }}" },
+      "credential": "cred_slack"
+    }
+  ],
+  "edges": [
+    { "id": "e_1", "from": "n_trigger", "to": "n_draft" },
+    { "id": "e_2", "from": "n_draft", "to": "n_hold" },
+    { "id": "e_3", "from": "n_hold", "to": "n_send" }
+  ],
+  "credentials": [
+    {
+      "id": "cred_bamboohr",
+      "capability_scope": "bamboohr",
+      "auth_type": "api_key",
+      "label": "BambooHR API key"
+    },
+    {
+      "id": "cred_openai",
+      "capability_scope": "openai",
+      "auth_type": "api_key",
+      "label": "OpenAI API key"
+    },
+    {
+      "id": "cred_slack",
+      "capability_scope": "slack",
+      "auth_type": "oauth2",
+      "label": "Slack workspace",
+      "required_scopes": ["chat:write"]
+    }
+  ],
+  "metadata": { "registry_version": "n8n@1.62.0+overlay.3" }
+}

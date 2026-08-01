@@ -1,0 +1,171 @@
+{
+  "name": "Employee onboarding",
+  "nodes": [
+    {
+      "id": "da65dabc-c87f-518e-991c-18dd5710cc74",
+      "name": "New employee in BambooHR",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bamboohr-employee-created",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "9df95fa9-f741-501d-b80e-bd7047dbab87",
+      "name": "Build the email address",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "37e3765c-5c95-5c6b-aad9-59a58149d5e0",
+              "name": "email",
+              "value": "={{ $json.employee.first_name }}.{{ $json.employee.last_name }}@{{ $vars.company_domain }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true
+      }
+    },
+    {
+      "id": "55eacd89-3d33-5cda-b8f8-0a5f9329c943",
+      "name": "Create Google Workspace account",
+      "type": "n8n-nodes-base.gSuiteAdmin",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "user",
+        "operation": "create",
+        "primaryEmail": "={{ $json.email }}",
+        "firstName": "={{ $('New employee in BambooHR').item.json.employee.first_name }}",
+        "lastName": "={{ $('New employee in BambooHR').item.json.employee.last_name }}",
+        "password": "={{ $vars.temp_password }}",
+        "additionalFields": {
+          "changePasswordAtNextLogin": true,
+          "orgUnitPath": "/"
+        }
+      },
+      "credentials": {
+        "gSuiteAdminOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Google Workspace admin"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "734c9069-1a66-5608-ab6d-e43f1e28bcbe",
+      "name": "Alert IT on failure",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        320
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#it-alerts",
+        "text": "=Account creation failed for {{ $('New employee in BambooHR').item.json.employee.first_name }}. Needs manual setup."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    },
+    {
+      "id": "0fec27a2-dccd-5c48-8ab2-20118924a243",
+      "name": "Announce in Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#general",
+        "text": "=Welcome {{ $('New employee in BambooHR').item.json.employee.first_name }} to the team. Their account is {{ $('Build the email address').item.json.email }}."
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Slack workspace"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New employee in BambooHR": {
+      "main": [
+        [
+          {
+            "node": "Build the email address",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build the email address": {
+      "main": [
+        [
+          {
+            "node": "Create Google Workspace account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Workspace account": {
+      "main": [
+        [
+          {
+            "node": "Announce in Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "Alert IT on failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "flowforge"
+  }
+}

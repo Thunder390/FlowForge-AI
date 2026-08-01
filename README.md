@@ -3,9 +3,9 @@
 **One-liner:** Describe an automation in plain English, get a working n8n
 workflow blueprint: interactive flow diagram, importable JSON, and a setup guide.
 
-- **Status:** Architecture frozen. Implementation started, M6a of 23 done.
+- **Status:** Architecture frozen. Implementation started, M6b of 23 done.
 - **Effort:** Large. See [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md)
-  for 23 session-sized milestones. Next up is M6b, the n8n target.
+  for 23 session-sized milestones. Next up is M7, the renderers.
 - **Why it exists:** The headline portfolio piece. A real AI SaaS with a
   non-trivial engineering core, not a wrapper around a chat completion.
 
@@ -83,15 +83,14 @@ lines in [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md).
 
 | Phase | Milestones | What lands | Status |
 | --- | --- | --- | --- |
-| 1. The Engine | M1 to M9 | FFIR, validation, registry, n8n compiler, renderers, AI layer. No UI. | In progress, M6a of 9 |
+| 1. The Engine | M1 to M9 | FFIR, validation, registry, n8n compiler, renderers, AI layer. No UI. | In progress, M6b of 9 |
 | 2. The Service | M10 to M13 | Postgres, durable jobs, API and SSE, auth and tenancy, metering | Not started |
 | 3. The Product | M14 to M19 | Results view, canvas, generation UX, chat iteration, dashboard, landing | Not started |
 | 4. Durability | M20 to M23 | Registry generator, eval harness, observability, marketplace | Not started |
 
-**Current milestone: M6a complete.** All five validation stages are in place,
-and so is the compiler's target-independent half: a validated FFIR document now
-resolves against the registry and normalizes into the intermediate
-representation every target lowers from. Next is M6b, the n8n target.
+**Current milestone: M6b complete.** The compiler works end to end: a plain FFIR
+document compiles to an n8n workflow JSON file, deterministically, with a golden
+file per node kind. Next is M7, the renderers.
 
 ## Documents
 
@@ -129,10 +128,10 @@ Requires Node 20.11 or newer and pnpm 10. Built so far: `packages/config`,
 `packages/ffir` (types, JSON Schema, the expression parser, and validation
 stages 0, 1, and 4), `packages/registry` (artifact schemas, the versioned
 loader, the resolver, alias search, validation stages 2 and 3, and a
-hand-written six-integration build under `fixtures/`), `packages/compiler`
-(pipeline stages 1 to 3 and the `Target` interface; the n8n target arrives in
-M6b), and `packages/ai` (so far only a re-export of validation stages 2 and 3;
-the provider interface and the generation passes arrive in M8).
+hand-written six-integration build under `fixtures/`), `packages/compiler` (the
+full six-stage pipeline and the n8n target, with golden files covering every
+node kind), and `packages/ai` (so far only a re-export of validation stages 2
+and 3; the provider interface and the generation passes arrive in M8).
 
 ## What It Proves to a Client
 

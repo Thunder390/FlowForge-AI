@@ -1,0 +1,108 @@
+{
+  "ffir_version": "1.0",
+  "expression_grammar": "1",
+  "id": "wf_branch_switch",
+  "name": "Route new hires to their team channel",
+  "description": "Three named cases rather than a yes or no, so the branch lowers to a Switch rather than an If.",
+  "nodes": [
+    {
+      "id": "n_trigger",
+      "kind": "trigger",
+      "capability": "bamboohr.employee.created",
+      "label": "New employee in BambooHR",
+      "parameters": {},
+      "credential": "cred_bamboohr"
+    },
+    {
+      "id": "n_route",
+      "kind": "branch",
+      "capability": "core.branch.if",
+      "label": "Which team?",
+      "parameters": {}
+    },
+    {
+      "id": "n_engineering",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Post to engineering",
+      "parameters": {
+        "channel": "#engineering",
+        "text": "{{ n_trigger.employee.first_name }} is joining engineering."
+      },
+      "credential": "cred_slack"
+    },
+    {
+      "id": "n_sales",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Post to sales",
+      "parameters": {
+        "channel": "#sales",
+        "text": "{{ n_trigger.employee.first_name }} is joining sales."
+      },
+      "credential": "cred_slack"
+    },
+    {
+      "id": "n_elsewhere",
+      "kind": "action",
+      "capability": "slack.message.send",
+      "label": "Post to general",
+      "parameters": {
+        "channel": "#general",
+        "text": "{{ n_trigger.employee.first_name }} is joining {{ n_trigger.employee.department }}."
+      },
+      "credential": "cred_slack"
+    }
+  ],
+  "edges": [
+    { "id": "e_1", "from": "n_trigger", "to": "n_route" },
+    {
+      "id": "e_2",
+      "from": "n_route",
+      "to": "n_engineering",
+      "port": "engineering",
+      "condition": {
+        "left": "{{ n_trigger.employee.department }}",
+        "operator": "equals",
+        "right": "Engineering"
+      }
+    },
+    {
+      "id": "e_3",
+      "from": "n_route",
+      "to": "n_sales",
+      "port": "sales",
+      "condition": {
+        "left": "{{ n_trigger.employee.department }}",
+        "operator": "equals",
+        "right": "Sales"
+      }
+    },
+    {
+      "id": "e_4",
+      "from": "n_route",
+      "to": "n_elsewhere",
+      "port": "everyone_else",
+      "condition": {
+        "left": "{{ n_trigger.employee.department }}",
+        "operator": "is_not_empty"
+      }
+    }
+  ],
+  "credentials": [
+    {
+      "id": "cred_bamboohr",
+      "capability_scope": "bamboohr",
+      "auth_type": "api_key",
+      "label": "BambooHR API key"
+    },
+    {
+      "id": "cred_slack",
+      "capability_scope": "slack",
+      "auth_type": "oauth2",
+      "label": "Slack workspace",
+      "required_scopes": ["chat:write"]
+    }
+  ],
+  "metadata": { "registry_version": "n8n@1.62.0+overlay.3" }
+}

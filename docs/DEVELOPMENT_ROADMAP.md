@@ -162,12 +162,55 @@ rename an unrelated node and break every expression referencing it by name.
 mapping, which COMPILER_ARCHITECTURE places in stage 4, so they belong to M6b
 along with `parameter_map`.
 
-### M6b. n8n target
+### M6b. n8n target (done)
 Stages 4 through 6 for n8n, covering all nine node kinds. Deterministic emit.
 
 **Done when:** the BambooHR onboarding example from WORKFLOW_SCHEMA compiles to
 n8n JSON matching a golden file, compiling twice produces byte-identical output,
 and there is a golden case per node kind.
+
+Met on 2026-08-01. 305 tests in `packages/compiler`, 904 across the workspace.
+Seven golden cases in `test/golden/`, covering all nine kinds between them, with
+a test that fails if a kind stops being covered. `UPDATE_GOLDEN=1 pnpm test`
+regenerates them.
+
+Adding the target required no change to `ffir`, `registry`, `ai`, or any shared
+compiler stage. That is the design goal tested rather than asserted, and a test
+now pins it: no file outside `targets/` may contain the string
+`n8n-nodes-base`.
+
+Node ids are UUIDv5 of the workflow id and the node id, checked against RFC
+4122's own published vector so the claim is that it *is* UUIDv5 rather than that
+it is some stable hash of ours. Every nested id n8n wants, Set-node assignments
+and condition rows among them, is derived the same way. Without this there are
+no golden files, because every compile would differ.
+
+Four decisions worth recording. The `=` prefix is applied last, to the finished
+string after transforms run, because `object_to_json_string` turns a whole
+object into one string and the prefix belongs to that string rather than to
+anything inside it; detecting one needs no bookkeeping, since grammar v1 has no
+escape for a literal `{{`. Operand type inference reads the registry's declared
+output type but cannot make `gt` or `lt` non-numeric, which is the case it
+exists for. A node with an outbound error edge is routed regardless of its
+policy, because the edge is the stronger statement. And `onError: stopWorkflow`
+is omitted rather than written out, since it is n8n's own default and a golden
+file should show the decisions a workflow actually made.
+
+Two claims here are documentation-derived and are what M9's manual import gate
+settles: the `error` connection key, which follows COMPILER_ARCHITECTURE's
+connections example rather than the `main[1]` form recent n8n also accepts, and
+the hand-written `parameter_map` paths in the fixtures. `core.branch.if` maps
+`case_sensitive` to `options.caseSensitive`, which does not look like where n8n's
+If node reads it; the compiler honours the binding anyway and carries the flag
+into the condition group as well, because second-guessing registry data is not
+its job.
+
+The one thing knowingly lost: an FFIR parameter with no `parameter_map` entry is
+dropped. Registry build rule 4 permits that, and the closed five-code warning
+vocabulary has no member for it, so only the two cases the architecture names
+raise a warning. `core.loop.for_each`'s `items` is the case that costs
+something, since Split In Batches iterates whatever arrives on its input rather
+than a collection the step names.
 
 ### M7. Renderers
 Mermaid, setup guide, integrations list, React Flow layout data.

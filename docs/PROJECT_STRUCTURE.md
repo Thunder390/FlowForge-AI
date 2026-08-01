@@ -163,9 +163,14 @@ compiler/
 │   ├── errors.ts             CompileError, CompileWarning, CompileResult
 │   ├── target.ts             Target and TargetCapabilities interfaces
 │   ├── transforms.ts         Named parameter transforms, closed set
+│   ├── uuid.ts               Deterministic UUIDv5 for node and part ids
 │   └── targets/
 │       ├── n8n/
-│       │   ├── lower.ts      All 9 node kinds
+│       │   ├── ir.ts         n8n's own workflow model
+│       │   ├── lower.ts      All 9 node kinds, and connections
+│       │   ├── parameters.ts static + parameter_map + transform + `=` prefix
+│       │   ├── conditions.ts Branch conditions and operand type inference
+│       │   ├── layout.ts     Layered graph layout
 │       │   ├── emit.ts       Deterministic serialization
 │       │   ├── verify.ts
 │       │   └── expression.ts AST -> n8n syntax
@@ -176,14 +181,15 @@ compiler/
     └── expected.n8n.json
 ```
 
-Stages 1 through 3 exist as of M6a. `transforms.ts` and everything under
-`targets/` are M6b: named transforms run during parameter mapping, which is
-stage 4, so they are target work rather than shared work.
-
 No network, no filesystem, no clock, no randomness. Node IDs are deterministic
-UUIDv5 rather than random, which is what makes golden-file testing work.
+UUIDv5 rather than random, which is what makes golden-file testing work. A test
+reads every source file and fails on `Date`, `Math.random`, `randomUUID`, or a
+filesystem import.
 
 Adding a target adds one directory under `targets/` and touches nothing else.
+The n8n target proved that: it required no change to `ffir`, `registry`, `ai`,
+or any shared compiler stage. A test keeps it true by failing if the string
+`n8n-nodes-base` appears in any file outside `targets/`.
 
 ### `packages/renderers`
 
