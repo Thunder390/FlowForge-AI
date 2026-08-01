@@ -1,14 +1,13 @@
 {
-  "name": "@flowforge/ai",
+  "name": "@flowforge/pipeline",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Prompts, providers, generation passes, and the registry-dependent validation stages. Must not import the compiler: the AI layer produces FFIR and knows nothing about any target platform.",
+  "description": "The orchestrator. Owns the generation state machine, and is the only package allowed to import both the AI layer and the compiler.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./fixtures": "./src/__fixtures__/index.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "test": "vitest run",
@@ -16,10 +15,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.115.0",
+    "@flowforge/ai": "workspace:*",
+    "@flowforge/compiler": "workspace:*",
     "@flowforge/ffir": "workspace:*",
-    "@flowforge/registry": "workspace:*",
-    "ajv": "^8.20.0"
+    "@flowforge/registry": "workspace:*"
   },
   "devDependencies": {
     "@flowforge/config": "workspace:*",

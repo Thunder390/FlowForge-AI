@@ -3,9 +3,9 @@
 **One-liner:** Describe an automation in plain English, get a working n8n
 workflow blueprint: interactive flow diagram, importable JSON, and a setup guide.
 
-- **Status:** Architecture frozen. Implementation started, M7 of 23 done.
+- **Status:** Architecture frozen. Implementation started, M8 of 23 done.
 - **Effort:** Large. See [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md)
-  for 23 session-sized milestones. Next up is M8, the AI layer.
+  for 23 session-sized milestones. Next up is M9, live generation and repair.
 - **Why it exists:** The headline portfolio piece. A real AI SaaS with a
   non-trivial engineering core, not a wrapper around a chat completion.
 
@@ -67,9 +67,12 @@ enforcement of model output, which is what makes invented parameter names
 structurally impossible.
 
 **3. The AI layer never learns about a target platform.**
-`packages/ai` cannot import `packages/compiler`, enforced in CI. Platform
-knowledge lives entirely in registry bindings and compiler targets. Adding
-Make.com is one `Target` plus per-capability bindings, and zero prompt changes.
+`packages/ai` cannot import `packages/compiler`. The manifest is what enforces
+it, since a strict node linker makes an undeclared import fail to resolve at
+build time; tests read every manifest and every source file to catch it earlier
+and say why. Platform knowledge lives entirely in registry bindings and compiler
+targets. Adding Make.com is one `Target` plus per-capability bindings, and zero
+prompt changes.
 
 **4. Validation does not trust its input's origin.**
 Every document passes the same pipeline whether it came from the model, a human,
@@ -83,15 +86,18 @@ lines in [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md).
 
 | Phase | Milestones | What lands | Status |
 | --- | --- | --- | --- |
-| 1. The Engine | M1 to M9 | FFIR, validation, registry, n8n compiler, renderers, AI layer. No UI. | In progress, M7 of 9 |
+| 1. The Engine | M1 to M9 | FFIR, validation, registry, n8n compiler, renderers, AI layer. No UI. | In progress, M8 of 9 |
 | 2. The Service | M10 to M13 | Postgres, durable jobs, API and SSE, auth and tenancy, metering | Not started |
 | 3. The Product | M14 to M19 | Results view, canvas, generation UX, chat iteration, dashboard, landing | Not started |
 | 4. Durability | M20 to M23 | Registry generator, eval harness, observability, marketplace | Not started |
 
-**Current milestone: M7 complete.** All four user-facing artifacts now exist: an
-importable n8n file, a mermaid diagram, a setup guide, and canvas data. Every one
-of them is a pure function of a single FFIR document. Next is M8, the AI layer
-that writes that document.
+**Current milestone: M8 complete.** A sentence now becomes a validated workflow.
+Two-pass generation, a closed parameter schema synthesized per workflow from
+registry data so an invented parameter name is structurally impossible, and a
+deterministic merge into FFIR, orchestrated by `packages/pipeline` and tested end
+to end against recorded model responses with no network call anywhere. Next is
+M9: the same path against a live model, plus the retry ladder, the repair
+prompt, and the compile dry-run gate.
 
 ## Documents
 
@@ -132,8 +138,11 @@ loader, the resolver, alias search, validation stages 2 and 3, and a
 hand-written six-integration build under `fixtures/`), `packages/compiler` (the
 full six-stage pipeline and the n8n target, with golden files covering every
 node kind), `packages/renderers` (mermaid, setup guide, integrations list, and
-React Flow canvas data), and `packages/ai` (so far only a re-export of validation
-stages 2 and 3; the provider interface and the generation passes arrive in M8).
+React Flow canvas data), `packages/ai` (the provider interface with an Anthropic
+and a replay implementation, per-tenant credential resolution, inline retrieval,
+schema synthesis, both generation passes, and the merge), and
+`packages/pipeline` (the generation state machine, the stage and event
+vocabulary, and one error taxonomy across all four layers).
 
 ## What It Proves to a Client
 

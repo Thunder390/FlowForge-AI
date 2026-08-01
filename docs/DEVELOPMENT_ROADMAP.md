@@ -252,7 +252,7 @@ Six of the nine mermaid shapes are chosen here; COMPILER_ARCHITECTURE names only
 trigger, branch, and action. The port colours are provisional: they belong in
 `packages/ui`, which M14 creates.
 
-### M8. AI layer against fixtures
+### M8. AI layer against fixtures (done)
 `ModelProvider` interface, Anthropic implementation, replay provider, both
 passes, schema synthesis, merge. Wired through `packages/pipeline`. Tested
 entirely against recorded fixtures.
@@ -261,9 +261,75 @@ entirely against recorded fixtures.
 with no live model call, and `schema-synth` produces a closed schema whose
 `additionalProperties` is false at every level for the worked example.
 
+Met on 2026-08-01. 172 tests in `packages/ai`, 57 in the new
+`packages/pipeline`, 1241 across the workspace. A sentence describing the
+BambooHR onboarding example generates a document that passes all five
+validation stages and compiles to n8n, with no network call anywhere.
+
+`schema-synth.ts` is the small file the milestone is really about. Because pass
+A has already committed to a capability set and node ids, the exact parameter
+schema for one workflow can be built from registry data at request time, and
+with `additionalProperties: false` at every level the model **cannot** emit a
+parameter name that does not exist. A test walks every object in a synthesized
+schema rather than checking the top level, because one nested level left open
+would keep every other test green.
+
+Three places the spec had to be corrected rather than followed:
+
+AI_SPEC has an optional parameter with no default included in `required`, with
+the model told to emit an empty string. That is right for strings and wrong for
+everything else: `""` is not a legal `number`, `boolean`, `array`, or `object`,
+so those keys would fail stage 3 on every generation, and no repair can fix a
+value the schema demands. Nor is it legal for a string carrying a `pattern` or
+`not_empty`. The rule implemented is that a registry-optional parameter is
+required only when the empty sentinel would actually survive validation.
+`additionalProperties` is untouched either way, so the central guarantee does
+not rest on this.
+
+An `object` parameter with no declared `fields` cannot be expressed in a closed
+schema at all, because `additionalProperties` may only be `false`. Such a
+parameter is dropped and reported: a warning when optional, since a person can
+still set it, and an error when required, since pass B could then never produce
+a document that validates. `slack.message.send`'s `blocks` and
+`http.request.send`'s `headers`, `query`, and `body` are the live cases.
+
+The merge derives a credential's scope from the integration its capability
+resolves to rather than from the `capability_scope` pass A emits. They are the
+same value for any well-formed plan and only the derived one is right when the
+model gets it wrong, so this removes a hallucination surface instead of
+validating it afterwards. The model's own value is still read and a
+disagreement is recorded, because a model contradicting something it could have
+derived is a prompt-quality signal.
+
+The replay provider matches on a digest of the canonical request rather than on
+call order. A sequential fixture set is quietly wrong the moment two passes are
+reordered or a retry is inserted: every later call is served the wrong
+recording and the test still passes. The fixtures build their requests by
+calling the same builders the orchestrator calls, so they match by construction
+and there is no hash to maintain by hand. That means prompt drift does not fail
+a fixture, which is why `prompts.test.ts` pins the instructions other layers
+depend on directly.
+
+`packages/pipeline` exists from here even though the compile dry-run it was
+named for is M9, because `errors.ts` already reconciles the compiler's
+vocabulary with the validator's and the AI layer's, and that is the other half
+of the same job. Progress events are driven by real position with no timer
+anywhere: pass A's stream is scanned for node labels as it arrives, anchored on
+`kind` so a variable's label is never announced as a step.
+
 **Review checkpoint 1.** Before M9: confirm the dependency graph matches
 PROJECT_STRUCTURE, that `packages/ai` has no path to `packages/compiler`, and
 that the CI dependency check is actually running.
+
+Partly met on 2026-08-01. `packages/pipeline/src/boundary.test.ts` reads every
+manifest and asserts the real graph against the drawn one: no forbidden edge,
+no cycle, `ai` and `compiler` siblings, and `pipeline` the only package
+depending on both. `packages/ai/src/boundary.test.ts` scans every source file
+and every prompt for a compiler import or platform vocabulary. What remains is
+infrastructure rather than checking: ESLint `no-restricted-imports` needs a lint
+setup and the CI check needs CI, and neither exists in the workspace yet.
+Both catch the same fault earlier and explain it better; neither catches
+anything the tests do not.
 
 ### M9. Live generation and the repair loop
 Real model calls. Classifier, retry ladder, repair prompt, compile dry-run gate.
@@ -440,7 +506,7 @@ regression, and a milestone is a session's work.
 | `v0.2.0` | M5 | Validation Engine Complete |
 | `v0.3.0` | M6a | Compiler Core |
 | `v0.4.0` | M7 | Engine Artifacts Complete |
-| `v0.5.0` | M8 | AI Generation Working |
+| `v0.5.0` | M8 | AI Generation Working (against fixtures) |
 | `v1.0.0` | M19 | Public MVP |
 
 Each tag is annotated and carries a GitHub release whose notes say what landed,

@@ -223,37 +223,56 @@ stages. **Does not import `compiler`.**
 ai/
 ├── src/
 │   ├── provider/
-│   │   ├── types.ts          ModelProvider, ProviderCapabilities
-│   │   ├── anthropic.ts
-│   │   ├── replay.ts         Fixture playback for CI
-│   │   └── resolve.ts        Per-tenant credential resolution
+│   │   ├── types.ts             ModelProvider, ProviderCapabilities
+│   │   ├── anthropic-wire.ts    The wire format, as pure functions
+│   │   ├── anthropic.ts         The SDK adapter over it
+│   │   ├── replay.ts            Fixture playback for CI
+│   │   └── resolve.ts           Per-tenant credential resolution
 │   ├── retrieval/
-│   │   ├── types.ts          CapabilityRetriever
-│   │   ├── inline.ts         Full catalog in the cached prefix
-│   │   └── tool-search.ts    Post-MVP, for >200 capabilities
+│   │   ├── types.ts             CapabilityRetriever
+│   │   ├── inline.ts            Full catalog in the cached prefix
+│   │   └── tool-search.ts       Post-MVP, for >200 capabilities
 │   ├── passes/
-│   │   ├── classify.ts
-│   │   ├── plan.ts           Pass A
-│   │   ├── parameters.ts     Pass B, synthesizes the closed schema
-│   │   └── repair.ts
-│   ├── merge.ts              Pass output -> FFIR
-│   ├── validate.ts           Stages 2 and 3, re-exported from registry
-│   └── schema-synth.ts       Builds the pass B schema from registry data
-├── prompts/
-│   ├── classifier/v1.md
-│   ├── pass_a/v1.md
-│   ├── pass_b/v1.md
-│   └── repair/v1.md
-└── fixtures/                 Recorded provider responses
+│   │   ├── call.ts              Stop reason, parse, validate. Shared by both.
+│   │   ├── classify.ts          M9
+│   │   ├── plan.ts              Pass A
+│   │   ├── parameters.ts        Pass B, synthesizes the closed schema
+│   │   └── repair.ts            M9
+│   ├── merge.ts                 Pass output -> FFIR
+│   ├── validate.ts              Stages 2 and 3, re-exported from registry
+│   ├── structured.ts            Parse model output against a schema
+│   ├── prompts.ts               Versioned prompt loading
+│   ├── schema-synth.ts          Builds the pass B schema from registry data
+│   └── __fixtures__/            Recorded provider responses
+└── prompts/
+    ├── classifier/v1.md         M9
+    ├── pass_a/v1.md
+    ├── pass_b/v1.md
+    └── repair/v1.md             M9
 ```
 
 Prompts are versioned files, not string literals, because a generation record
-must be attributable to a prompt revision. See
-[OBSERVABILITY_AND_EVALS.md](OBSERVABILITY_AND_EVALS.md).
+must be attributable to a prompt revision. `metadata.prompt_version` names each
+of them rather than carrying one counter, because a generation uses several and
+a single number bumped by hand drifts the first time two are edited together.
+See [OBSERVABILITY_AND_EVALS.md](OBSERVABILITY_AND_EVALS.md).
 
 `schema-synth.ts` is small and is the highest-value file in the package: it turns
 a resolved capability set into the closed JSON schema that makes invented
 parameter names structurally impossible.
+
+`anthropic-wire.ts` and `anthropic.ts` are one integration split on
+testability. Everything that constitutes a decision, which parameters are set,
+which are deliberately absent, where the cache breakpoint lands, and how a
+finished message is read, is a pure function with its own tests. What is left in
+the adapter is a loop over a stream, which is the only part that genuinely needs
+a network to be wrong.
+
+`structured.ts` validates model output against the schema the request was
+constrained to, which is redundant on a provider with strict structured outputs
+and kept anyway. That guarantee belongs to one provider rather than to the
+architecture, and it does not hold at all on a replay fixture, which is what
+every test below M9 runs against.
 
 ### `packages/pipeline`
 
@@ -263,7 +282,7 @@ The orchestrator. Imports `ai`, `compiler`, `registry`, `ffir`, `renderers`, `db
 pipeline/
 ├── src/
 │   ├── generate.ts           The state machine
-│   ├── iterate.ts            Chat iteration, carries baseVersionId
+│   ├── iterate.ts            Chat iteration, carries baseVersionId (M17)
 │   ├── stages.ts             Stage enum, shared with tracing
 │   ├── events.ts             Event emission into the log
 │   └── errors.ts             Unified error taxonomy across layers
@@ -272,7 +291,22 @@ pipeline/
 `errors.ts` is where the compiler's `CompileError`, the AI layer's validation
 codes, and the API's error envelope reconcile into one namespace. Three
 independent error vocabularies is how a support conversation becomes
-archaeology.
+archaeology. The reconciliation deliberately does not renumber anything: each
+failure keeps the code its own specification uses, because that code is what the
+repair prompt prints and what someone greps a log for. What it adds is the two
+things no single vocabulary provides, which stage produced the failure and
+whether trying again could possibly help.
+
+`stages.ts` declares all seven stages including the two M9 adds, for the same
+reason `ffir`'s `codes.ts` declares codes for stages it does not implement: the
+file is the vocabulary, and tracing, the event log, and the UI all have to name
+the same stages. `IMPLEMENTED_STAGES` records which ones actually run, and a
+test pins the events `generate` emits against it, so a stage cannot start or
+stop running without the declaration following.
+
+`events.ts` drives progress from real pipeline position, never from a timer. A
+progress indicator that advances while nothing is happening is a lie the user
+eventually notices, and it gives no signal when a call has stalled.
 
 ### `packages/db`
 
