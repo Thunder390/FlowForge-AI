@@ -354,7 +354,7 @@ No milestone depends on a package built later.
 
 ## Release Checkpoints
 
-Five tags, cut at the points where the system gains a capability it did not have
+Tags are cut at the points where the system gains a capability it did not have
 before. Not one per milestone: a tag is a place worth returning to when hunting a
 regression, and a milestone is a session's work.
 
@@ -362,13 +362,16 @@ regression, and a milestone is a session's work.
 | --- | --- | --- |
 | `v0.1.0` | architecture freeze | Architecture Frozen |
 | `v0.2.0` | M5 | Validation Engine Complete |
-| `v0.3.0` | M7 | Compiler Complete |
-| `v0.4.0` | M8 | AI Generation Working |
+| `v0.3.0` | M6a | Compiler Core |
+| `v0.4.0` | M7 | Compiler Complete |
+| `v0.5.0` | M8 | AI Generation Working |
 | `v1.0.0` | M19 | Public MVP |
 
 Each tag is annotated and carries a GitHub release whose notes say what landed,
 which decisions are load-bearing, and what is known to be weak. Tags are never
-moved once pushed.
+moved once pushed, so the table shifts down rather than reassigning a number
+that has shipped: `v0.3.0` became Compiler Core when M6 split, and everything
+below it moved by one.
 
 ## Related Documents
 
