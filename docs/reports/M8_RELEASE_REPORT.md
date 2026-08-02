@@ -1,5 +1,12 @@
 # FlowForge v0.5.0 Release Report: Milestone 8, "AI layer against fixtures"
 
+> **Repository snapshot:** This report documents the repository as verified on
+> **2026-08-02** at commit **`11cc14e`** (`main`). All test counts, repository
+> state, release counts, and verification results refer to that snapshot and are
+> intentionally not updated as later milestones progress. Where the report
+> describes work as deferred or not yet implemented, read that as true of the
+> snapshot, not necessarily of the repository today.
+
 ## Executive Summary
 
 Milestone 8 (M8) is complete and released as `v0.5.0` from commit `11cc14e`. It delivers the full generation path: a `ModelProvider` interface with an Anthropic implementation and a record/replay implementation, both generation passes, request-time schema synthesis, a deterministic merge into the project's intermediate representation, and a new `packages/pipeline` that orchestrates them. Verification was re-run against the released commit: 1241 tests pass across six packages with zero failures and zero skips, typecheck is clean, the working tree is empty, `git fsck` reports no problems, and `HEAD` matches `origin/main`. Every guarantee in this release is proven against recorded fixtures rather than a live model, which is why the release title carries the qualifier "(against fixtures)". The next milestone, M9, removes that qualifier.
