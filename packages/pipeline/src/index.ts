@@ -44,3 +44,5 @@ export {
   type GenerationFailure,
   type Recovery,
 } from "./errors.js";
+
+export { buildRepairPrompt, repairable } from "./repair.js";
