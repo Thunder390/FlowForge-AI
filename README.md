@@ -99,6 +99,10 @@ to end against recorded model responses with no network call anywhere. Next is
 M9: the same path against a live model, plus the retry ladder, the repair
 prompt, and the compile dry-run gate.
 
+Full verification report, including the build checks, the three documented
+deviations from AI_SPEC, and the known gaps:
+[M8_RELEASE_REPORT.md](docs/reports/M8_RELEASE_REPORT.md).
+
 ## Documents
 
 Read in this order.
