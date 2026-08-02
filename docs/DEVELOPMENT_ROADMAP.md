@@ -341,6 +341,45 @@ fixture triggers a repair that succeeds.
 **Manual gate:** import three generated workflows into a real n8n instance and
 confirm they load without error. This cannot be automated and is required.
 
+**Specification divergences.** Recorded as they are found, before the code that
+acts on them lands. Where AI_SPEC's normative material (requirements, acceptance
+criteria, tables) disagrees with its illustrative material (examples, diagrams,
+sample prompts), the normative source wins and the divergence is written down
+here. The specification is never silently corrected by implementation.
+
+*D1. The repair prompt's `Expected:` line. Illustrative, not followed.*
+AI_SPEC's sample repair prompt prints an `Expected:` line per failure, which
+reads as though validators carry an `expected` field. They do not: a
+`ValidationError` is `code`, `path`, `message`, and an untyped `details` bag, and
+the keys actually emitted across every validator are `capability`, `node_id`,
+`parameter`, `pattern`, `value`, `reason`, `limit`, `allowed`, and `actual`.
+The conflict is between a sample prompt, which is illustrative, and the data the
+validators really produce, so the sample does not bind. The three bullets under
+it are normative and are all satisfied: the prompt is machine-generated from
+validator output, it names the node and parameter, and it forbids changing
+anything that was not flagged. The expectation already lives in `message`, which
+WORKFLOW_SCHEMA.md requires to be specific enough to act on without reading the
+code, so `message` is printed and `value` only when a failure carries one.
+Templating an `Expected:` line would produce confident text that is sometimes
+wrong, in the one prompt where that is least acceptable. Landed in `05d609d`.
+
+*D2. The repair budget. Three statements, one reading that satisfies all of them.*
+Three places in AI_SPEC constrain how many repairs may run, and they do not
+obviously agree. The ladder table, which is normative, gives 2 attempts for a
+schema, parameter, or graph failure and 1 for a compile dry-run failure. The
+generation-flow diagram, which is illustrative, says "back to [5], max 2
+attempts" and does not mention the compile rung at all. The prose immediately
+under the table says "total worst case is four Opus calls", which pass A and
+pass B already consume two of.
+
+Read as independent budgets, the table allows two validation repairs plus one
+compile repair, which is five Opus calls and contradicts both the diagram and
+the stated total. Read as one shared budget of 2 repair calls per generation, of
+which at most 1 may be triggered by a compile dry-run failure, every statement
+in the document holds simultaneously: the table's 2, the table's 1, the
+diagram's 2, and the four-call total. The second reading is the one implemented,
+because it is the only one that leaves no normative statement contradicted.
+
 ## Phase 2: The Service
 
 ### M10. Database and repositories
