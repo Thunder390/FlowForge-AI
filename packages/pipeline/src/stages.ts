@@ -42,10 +42,17 @@ export type Stage = (typeof STAGES)[number];
 /**
  * The stages `generate` actually runs.
  *
- * `classify` and `compile` are M9. The classifier is a model call this build
- * has no prompt for, and the compile dry-run needs the retry ladder to be worth
- * anything: a dry-run that can only report failure, never repair it, moves the
- * error from download time to generation time without fixing it.
+ * `classify` is still M9: it is a model call this build has no prompt for.
+ *
+ * `compile` runs from here. An earlier version of this comment argued the
+ * dry-run was not worth landing before the retry ladder, on the grounds that a
+ * gate which can only report a failure and never repair it merely moves the
+ * error from download time to generation time. That undersells the move. A
+ * failure reported at generation time is one the user hears about while they
+ * are still looking at the screen, rather than a file that downloads cleanly
+ * and breaks on import. The ladder also needs a gate to repair *from* before it
+ * can repair anything, so this is the precondition rather than a consolation
+ * prize. Repair itself arrives with the ladder.
  *
  * A test pins the events `generate` emits against this list, so a stage that
  * starts running without being declared here, or stops running while still
@@ -57,10 +64,11 @@ export const IMPLEMENTED_STAGES: readonly Stage[] = [
   "parameters",
   "merge",
   "validate",
+  "compile",
 ];
 
 /** Stages the roadmap places in M9. Named so the gap is explicit rather than implied. */
-export const DEFERRED_STAGES: readonly Stage[] = ["classify", "compile"];
+export const DEFERRED_STAGES: readonly Stage[] = ["classify"];
 
 export type StageOwner = "ai" | "compiler" | "pipeline";
 

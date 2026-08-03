@@ -310,8 +310,10 @@ describe("the stage vocabulary", () => {
     }
   });
 
-  it("defers exactly the two stages the roadmap places in M9", () => {
-    expect([...DEFERRED_STAGES]).toEqual(["classify", "compile"]);
+  it("defers only the classifier, now that the compile gate runs", () => {
+    // `compile` moved into IMPLEMENTED_STAGES with the dry-run gate. The
+    // classifier is the last M9 stage this build has no prompt for.
+    expect([...DEFERRED_STAGES]).toEqual(["classify"]);
   });
 
   it("names an owner for every stage", () => {

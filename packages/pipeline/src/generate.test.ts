@@ -196,9 +196,10 @@ describe("generating the onboarding workflow from a sentence", () => {
 
 describe("the generated document is exportable", () => {
   /**
-   * Not the compile dry-run gate, which is stage 5 and M9. This asserts the
-   * weaker and still useful thing: what generation produces is something the
-   * compiler accepts today, so M9 is wiring rather than discovery.
+   * Distinct from the compile dry-run gate, which now runs inside `generate`
+   * and discards its output. This compiles the returned document a second time
+   * and asserts on the artifact itself, which is the part the gate deliberately
+   * throws away. Both exist because they fail for different reasons.
    */
   it("compiles to n8n without errors", async () => {
     const { result, fixture } = await run();
